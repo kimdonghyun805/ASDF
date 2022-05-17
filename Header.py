@@ -1,7 +1,6 @@
 import sys
 import os
 import pickle
-import copy
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QDesktopWidget, 
                              QAction, QToolBar, QVBoxLayout, QScrollArea,

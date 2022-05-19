@@ -1,8 +1,8 @@
 import Header
 
 class WidgetList (Header.QScrollArea) :
-    def __init__(self, size_x, size_y, dictionary_icon, font, widget) :
-        super().__init__(widget)
+    def __init__(self, size_x, size_y, dictionary_icon, font, path_widgetfiles) :
+        super().__init__()
         self.size_x = size_x
         self.size_y = size_y
 
@@ -11,7 +11,8 @@ class WidgetList (Header.QScrollArea) :
         self.icon_add = dictionary_icon["add"]
 
         self.font = font
-        print("widget list font :", self.font.toString())
+        self.path_widgetfiles = path_widgetfiles
+        #Header.sys.path.append(".\\" + self.path_widgetfiles)
 
         self.height_widget_file = 110
         self.now_height_widget = 20
@@ -36,6 +37,9 @@ class WidgetList (Header.QScrollArea) :
 
         self.setStyleSheet("border-style : solid; border-width : 2px; border-color : #FF0000;")
         self.setVisible(True)
+
+        self.list_widgetfiles = self.checkWidgetFile()
+        self.displayWidgetFileList(self.list_widgetfiles)
 
         for n in range(1, 11) :
             self.d = self.makeWidgetFile(str(n)*15)
@@ -103,8 +107,59 @@ class WidgetList (Header.QScrollArea) :
 
     def checkWidgetFile(self) :
         # 폴더 위치에서 위젯 파일들을 확인
-        pass
+        list_python_files = []
+        list_widget_files = []
+        
+        try :
+            list_resources = Header.os.listdir(self.path_widgetfiles)
+            list_python_files = list(f for f in list_resources if f.endswith(".py"))
+        except :
+            print("Directory access denied :", self.path_widgetfiles)
+            Header.sys.exit(0)
 
-    def displayWidgetFileList(self) :
+        print(".py list :", list_python_files)
+
+        package = Header.importlib.import_module(self.path_widgetfiles)
+        #print(dir(package))
+        #m1 = getattr(package, list_python_files[0])
+        #print(Header.sys.path)
+
+        #Header.importlib.invalidate_caches()
+        for p in list_python_files :
+            d = {}
+            d["name"] = p[:-3]
+            d["module"] = Header.importlib.import_module(d["name"], self.path_widgetfiles)
+            #d["module"] = __import__(d["name"])
+            list_widget_files.append(d)
+
+        print("widget file list :", list_widget_files)
+        #print("1. :", dir(list_widget_files[0]["module"]))
+        #print("2. :", dir(list_widget_files[0].items))
+        #print("3. :", dir(list_widget_files[0].get))
+        #print("4. :", dir(list_widget_files[0].values))
+
+        #cls = getattr(list_widget_files[0]["module"], list_widget_files[0]["name"])
+        #print(type(cls), "\n\n", cls)
+        list_inspect = Header.inspect.getmembers(list_widget_files[0]["module"], Header.inspect.isclass) # 모듈의 클래스 확인
+        print("A", list_inspect)
+        cls_ins = None
+        for l in list_inspect :
+            if l[0] == list_widget_files[0]["name"] : cls_ins = l # 모듈의 클래스 리스트에서 필요한 클래스 추출
+        print("B", cls_ins)
+        print("C", cls_ins[1]) # 모듈(파일) 이름과 클래스 이름이 같아야 함
+        func_inspect = Header.inspect.getmembers(cls_ins[1], Header.inspect.isfunction) # 클래스의 함수 추출
+        print("D", func_inspect)
+        fun_ins = None
+        for k in func_inspect :
+            if k[0] == "setWidgetData" : fun_ins = k # 함수 명칭을 통해 특정 함수 추출
+        print("E", fun_ins)
+        obj = cls_ins[1]()
+        print(type(cls_ins[1])) # wrapper 타입
+        print(type(obj)) # 객체 타입 - 객체 생성 가능함
+        fun_ins[1](obj, 5, 5) # 함수 실행 - 파라미터는 아직 확인할 수 없음
+
+        return list_widget_files
+
+    def displayWidgetFileList(self, list_widgetfiles) :
         # 확인한 위젯 파일들의 목록을 위젯 형태로 만들어 표시함
-        pass
+        print("do displayWidgetFileList")

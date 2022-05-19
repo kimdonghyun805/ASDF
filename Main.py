@@ -33,7 +33,6 @@ def loadFont(path_resources, name_font, type_font) :
     return font
 
 def checkResources(path_resources, type_icon, type_font) :
-    checkDirectory(path_resources)
     try :
         list_resources = Header.os.listdir(path_resources)
     except :
@@ -72,21 +71,21 @@ def makeToolbar(dictionary_icon, font, path_savefile) :
     toolbar = Toolbar(dictionary_icon, f, path_savefile)
     return toolbar
 
-def makeWidgetList(size_x, size_y, dictionary_icon, font, widget) :
+def makeWidgetList(size_x, size_y, dictionary_icon, font, path_widgetfiles) :
     # 위젯리스트 인터페이스 객체를 만들 리턴
     f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
     f.setPointSize(10)
     f.setPixelSize(20)
-    widget_list = WidgetList(size_x, size_y, dictionary_icon, f, widget)
+    widget_list = WidgetList(size_x, size_y, dictionary_icon, f, path_widgetfiles)
     return widget_list
 
-def makeProgramming(size_x, size_y, dictionary_icon, font, widget) :
+def makeProgramming(size_x, size_y, dictionary_icon, font, path_savefiles) :
     # 프로그래밍 인터페이스 객체를 만들어 리턴
     f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
     f.setPointSize(10)
     f.setPixelSize(15)
     f.setItalic(True)
-    programming = Programming(size_x, size_y, dictionary_icon, f, widget)
+    programming = Programming(size_x, size_y, dictionary_icon, f, path_savefiles)
     return programming
 
 class MainWindow (Header.QMainWindow) :
@@ -97,7 +96,6 @@ class MainWindow (Header.QMainWindow) :
         self.size_x = size_x
         self.size_y = size_y
         self.title = title
-        #self.font = Header.QFont(font) #검증필요
 
         self.setWindowTitle(self.title)
         self.resize(Header.QSize(self.size_x, self.size_y))
@@ -118,7 +116,11 @@ class MainWindow (Header.QMainWindow) :
 
 if __name__ == "__main__" :
     path_resources = "Resources"
-    path_savefile = "SaveFiles"
+    path_savefiles = "SaveFiles"
+    path_widgetfiles = "WidgetFiles"
+    path_now = Header.os.path.realpath(__package__)
+    print(path_now)
+    Header.sys.path.append(path_now + "\\" + path_widgetfiles)
     title = "ASDF"
 
     size_x_main = 1280
@@ -133,24 +135,25 @@ if __name__ == "__main__" :
     type_icon = ".png"
     type_font = ".otf"
 
+    checkDirectory(path_resources)
+    checkDirectory(path_savefiles)
+    checkDirectory(path_widgetfiles)
+
     window = Header.QApplication(Header.sys.argv)
     (dictionary_icon, font) = checkResources(path_resources, type_icon, type_font)
 
     main = MainWindow(size_x_main, size_y_main, title)
 
-    toolbar = makeToolbar(dictionary_icon, font, path_savefile)
+    toolbar = makeToolbar(dictionary_icon, font, path_savefiles)
     main.addToolBar(toolbar)
 
-    widget_list = makeWidgetList(size_x_widget_list, size_y_widget_list, dictionary_icon, font, main.widget)
+    widget_list = makeWidgetList(size_x_widget_list, size_y_widget_list, dictionary_icon, font, path_widgetfiles)
     main.layout.addWidget(widget_list)
 
-    programming = makeProgramming(size_x_programming, size_y_programming, dictionary_icon, font, main.widget)
+    programming = makeProgramming(size_x_programming, size_y_programming, dictionary_icon, font, path_savefiles)
     main.layout.addWidget(programming)
 
     print("start")
-    print("toolbar font :", toolbar.font.toString())
-    print("widget_list font :", widget_list.font.toString())
-    print("programming font :", programming.font.toString())
     main.show()
     
     Header.sys.exit(window.exec_())

@@ -1,8 +1,8 @@
 import Header
 
 class Programming(Header.QWidget) :
-    def __init__(self, size_x, size_y, dictionary_icon, font, widget) :
-        super().__init__(widget)
+    def __init__(self, size_x, size_y, dictionary_icon, font, path_savefiles) :
+        super().__init__()
         self.size_x = size_x
         self.size_y = size_y
         
@@ -11,7 +11,7 @@ class Programming(Header.QWidget) :
         self.icon_close = dictionary_icon["close"]
 
         self.font = font
-        print("programming font :", self.font.toString())
+        self.path_savefiles = path_savefiles
 
         self.resize(Header.QSize(self.size_x, self.size_y))
         self.setFixedSize(self.size_x, self.size_y)

@@ -10,7 +10,6 @@ class Toolbar (Header.QToolBar) :
         self.font = font
         #self.font.setBold(True)
         #self.font.setPixelSize(30)
-        print("toolbar font :", self.font.toString())
         
 
         self.color_black = "Color : black"

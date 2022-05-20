@@ -143,20 +143,68 @@ class WidgetList (Header.QScrollArea) :
         list_inspect = Header.inspect.getmembers(list_widget_files[0]["module"], Header.inspect.isclass) # 모듈의 클래스 확인
         print("A", list_inspect)
         cls_ins = None
-        for l in list_inspect :
+        for l in reversed(list_inspect) :
             if l[0] == list_widget_files[0]["name"] : cls_ins = l # 모듈의 클래스 리스트에서 필요한 클래스 추출
         print("B", cls_ins)
         print("C", cls_ins[1]) # 모듈(파일) 이름과 클래스 이름이 같아야 함
+
         func_inspect = Header.inspect.getmembers(cls_ins[1], Header.inspect.isfunction) # 클래스의 함수 추출
         print("D", func_inspect)
+
+        init_ins = None
         fun_ins = None
         for k in func_inspect :
-            if k[0] == "setWidgetData" : fun_ins = k # 함수 명칭을 통해 특정 함수 추출
+            if k[0] == "setWidgetData" : 
+                fun_ins = k # 함수 명칭을 통해 특정 함수 추출
+            elif k[0] == "__init__" :
+                init_ins = k
         print("E", fun_ins)
-        obj = cls_ins[1]()
+        print("F", init_ins)
+
+        obj = cls_ins[1]() # 객체 생성
+        #obj = init_ins[1](obj) # 생성자 함수로는 객체 생성 불가능
         print(type(cls_ins[1])) # wrapper 타입
         print(type(obj)) # 객체 타입 - 객체 생성 가능함
+
         fun_ins[1](obj, 5, 5) # 함수 실행 - 파라미터는 아직 확인할 수 없음
+        lis = obj.getWidgetData() # 일반적인 함수호출 가능, 리턴 가능
+        print("lis", lis)
+
+        fun_sig = Header.inspect.signature(fun_ins[1]) # 함수 파라미터 정보를 가져옴
+        init_sig = Header.inspect.signature(init_ins[1])
+        print("G", type(fun_sig), fun_sig)
+        print("H", fun_sig.parameters.values(), len(fun_sig.parameters.values())) # 파라미터 목록과 개수
+        
+        list_parm = []
+        list_parm_value = []
+        for a in fun_sig.parameters.values() :
+            print(type(a.name), a.name, type(a.default), a.default, type(a.kind), a.kind)
+            if a.default == Header.inspect._empty :
+                if str(a.name) != "self" : 
+                    print("need to set parameter :", a.name)
+                    list_parm.append(a.name)
+        print("I", list_parm)
+        list_parm_value.append(obj)
+        for b in list_parm :
+            list_parm_value.append(99)
+        print("J", list_parm_value)
+        parm = fun_sig.bind(*list_parm_value) # 리스트 언패킹으로 파라미터 전달
+        #parm = fun_sig.bind(list_parm_value[0], list_parm_value[1], list_parm_value[2])
+        #parm = fun_sig.bind(obj, 7, 7)
+        fun_ins[1](*parm.args, **parm.kwargs) # 바인드 되어있는 파라미터 정보로 함수 호출
+        parm = fun_sig.bind(obj, 55, 55)
+        fun_ins[1](*parm.args, **parm.kwargs)
+        
+        #fun_arg = Header.inspect.getargspec(fun_ins[1]) # 함수 파라미터 정보
+        #init_arg = Header.inspect.getargspec(init_ins[1])
+        #print("I", fun_arg)
+        #print("J", init_arg)
+
+        # self.지역변수를 객체 생성 이전에 알 방법 없음
+        #init_code = Header.inspect.getmembers(init_ins[1], Header.inspect.iscode)
+        #print("K", init_code[0][1].co_varnames) # 함수의 지역변수 목록
+        #cls_code = Header.inspect.getmembers(cls_ins[1], Header.inspect.iscode)
+        #print("L", cls_code)
 
         return list_widget_files
 

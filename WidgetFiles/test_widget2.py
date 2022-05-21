@@ -20,13 +20,23 @@ class test_widget2 (QWidget) :
     def connectWidget(self) :
         print("do connectWidget 2")
 
-    def getWidgetData(self) :
+    def getData(self) :
         print("do getWidgetData 2")
 
-    def setWidgetData(self, x, y) :
+    def setData(self, x, y) :
         self.size_x = x
         self.size_y = y
         self.resize(self.size_x, self.size_y)
         self.textfield.resize(self.size_x, self.size_y)
         print("do setWidgetData 2", str(self.size_x), str(self.size_y))
+
+    def getOrder(self) : pass
+
+    def setOrder(self) : pass
+
+    def getInfo(self) : pass
+
+    def setLocation(self) : pass
+
+    def deleteWidget(self) : pass
 

@@ -12,7 +12,6 @@ class WidgetList (Header.QScrollArea) :
 
         self.font = font
         self.path_widgetfiles = path_widgetfiles
-        #Header.sys.path.append(".\\" + self.path_widgetfiles)
 
         self.height_widget_file = 110
         self.now_height_widget = 20
@@ -38,13 +37,10 @@ class WidgetList (Header.QScrollArea) :
         self.setStyleSheet("border-style : solid; border-width : 2px; border-color : #FF0000;")
         self.setVisible(True)
 
+        (self.dialog, self.info_dialog) = self.makeInfoDialog()
+
         self.list_widgetfiles = self.checkWidgetFile()
         self.displayWidgetFileList(self.list_widgetfiles)
-
-        for n in range(1, 11) :
-            self.d = self.makeWidgetFile(str(n)*15)
-            self.layout.addWidget(self.d)
-            self.setWidgetHeight(True, self.height_widget_file)
 
 
     def setWidgetHeight(self, up_or_down, height) :
@@ -57,8 +53,13 @@ class WidgetList (Header.QScrollArea) :
                 self.now_height_widget = self.now_height_widget - height - 10
         self.widget.setFixedHeight(self.now_height_widget)
 
+    def makeWidgetFile(self, data_widgetfile) :
+        name = data_widgetfile["name"]
+        path = data_widgetfile["path"]
+        widget_class = data_widgetfile["class"]
+        widget_function = data_widgetfile["function"]
+        func_info = widget_function["getInfo"]
 
-    def makeWidgetFile(self, name) :
         widget_file = Header.QGroupBox()
         width = 200
         height = 110
@@ -77,14 +78,14 @@ class WidgetList (Header.QScrollArea) :
         button_info.setIconSize(Header.QSize(35, 35))
         button_info.move(20, 60)
         button_info.setToolTip("이 위젯의 정보를 표시합니다.")
-        button_info.clicked.connect(lambda : self.displayWidgetInfo())
+        button_info.clicked.connect(lambda : self.displayWidgetInfo(name, func_info))
 
         button_edit = Header.QPushButton(None, widget_file)
         button_edit.setIcon(self.icon_edit)
         button_edit.setIconSize(Header.QSize(35, 35))
         button_edit.move(80, 60)
         button_edit.setToolTip("이 위젯 파일의 내용을 수정합니다.")
-        button_edit.clicked.connect(lambda : self.editWidgetFile())
+        button_edit.clicked.connect(lambda : self.editWidgetFile(path))
 
         button_add = Header.QPushButton(None, widget_file)
         button_add.setIcon(self.icon_add)
@@ -96,19 +97,36 @@ class WidgetList (Header.QScrollArea) :
         widget_file.setStyleSheet("border-style : solid; border-width : 2px; border-color : #000000;")
         return widget_file
         
-    def displayWidgetInfo(self) :
-        print("do displayWidgetInfo")
+    def makeInfoDialog (self) :
+        dialog = Header.QDialog(None, Header.Qt.WindowTitleHint | Header.Qt.WindowCloseButtonHint)
+        dialog.setWindowTitle("info")
+        dialog.setFixedSize(300, 200)
 
-    def editWidgetFile(self) :
-        print("do editWidgetFile")
+        text_info = Header.QTextEdit("widget information", dialog)
+        text_info.resize(280, 180)
+        text_info.move(10, 10)
+        text_info.setFont(self.font)
+        text_info.setAcceptRichText(False)
+        text_info.setReadOnly(True)
+
+        return (dialog, text_info)
+
+    def displayWidgetInfo(self, name, func_info) :
+        info = func_info(None)
+        self.dialog.setWindowTitle(name + " 위젯 정보")
+        self.info_dialog.setText(info)
+        self.dialog.exec()
+
+    def editWidgetFile(self, path) :
+        Header.os.popen(path)
 
     def makeWidget(self) :
         print("do makeWidget")
 
     def checkWidgetFile(self) :
         # 폴더 위치에서 위젯 파일들을 확인
-        list_python_files = []
-        list_widget_files = []
+        list_python_files = [] # .py 파일 리스트
+        list_widget_files = [] # 모듈 정보 리스트
         
         try :
             list_resources = Header.os.listdir(self.path_widgetfiles)
@@ -116,98 +134,63 @@ class WidgetList (Header.QScrollArea) :
         except :
             print("Directory access denied :", self.path_widgetfiles)
             Header.sys.exit(0)
+        #print("list_python_files:", list_python_files)
 
-        print(".py list :", list_python_files)
+        # 파이썬 파일 리스트에서 각 파일을 모듈로 임포트하여 (name, module)의 리스트인 list_widget_file 제작
+        for file_py in list_python_files :
+            t_name = file_py[:-3] # 파일 이름에서 .py 제거 -> 모듈 이름
+            t_module = Header.importlib.import_module(t_name, self.path_widgetfiles)
+            if t_name != "default" : # 기본 파일은 인식하지 않음
+                tuple_widget = (t_name, t_module)
+                list_widget_files.append(tuple_widget)
+        #print("list_widget_files :", list_widget_files)
 
-        package = Header.importlib.import_module(self.path_widgetfiles)
-        #print(dir(package))
-        #m1 = getattr(package, list_python_files[0])
-        #print(Header.sys.path)
+        list_mandatory_func = ["__init__", "setOrder", "getOrder", "setData", "getData", "setLocation", "getInfo", "deleteWidget"]
+        list_dict_widget_files = []
+        for file_widget in list_widget_files :  # 각 모듈에 대해
+            dict_widget_files = {}
+            w_name = None
+            w_path = None
+            w_class = None
+            dict_w_func = {}
+            #print(file_widget[1].__file__)
+            list_class = Header.inspect.getmembers(file_widget[1], Header.inspect.isclass) # 클래스 목록을 확인하고
 
-        #Header.importlib.invalidate_caches()
-        for p in list_python_files :
-            d = {}
-            d["name"] = p[:-3]
-            d["module"] = Header.importlib.import_module(d["name"], self.path_widgetfiles)
-            #d["module"] = __import__(d["name"])
-            list_widget_files.append(d)
+            for class_widget in reversed(list_class) : # 클래스 목록에서
+                if class_widget[0] == file_widget[0] : # 클래스 이름과 모듈 이름이 같은 클래스가 있는 경우
+                    w_name = file_widget[0]
+                    w_path = file_widget[1].__file__
+                    w_class = class_widget[1] # 정보를 임시로 저장
+                    
+                    # 모듈의 함수 리스트를 가져오고
+                    list_func = Header.inspect.getmembers(w_class, Header.inspect.isfunction)
+                    #print("list_func :", list_func)
+                    num_func = 0
+                    for func in list_func :
+                        for name in list_mandatory_func :
+                            if func[0] == name : # 필수 함수가 작성되어 있는 경우, 정보를 임시로 저장
+                                dict_w_func[name] = func[1]
+                                num_func += 1
+                    if num_func == len(list_mandatory_func) : # 모든 필수 함수가 작성되어 있는 경우, 딕셔너리에 데이터 저장
+                        dict_widget_files["name"] = w_name
+                        dict_widget_files["path"] = w_path
+                        dict_widget_files["class"] = w_class
+                        dict_widget_files["function"] = dict_w_func
+                    else :
+                        print("widget :", w_name, ", lost some mendatory functions :", len(list_mandatory_func) - num_func)
+                    break # 이름이 같은 클래스를 찾은 경우 반복문 탈출
 
-        print("widget file list :", list_widget_files)
-        #print("1. :", dir(list_widget_files[0]["module"]))
-        #print("2. :", dir(list_widget_files[0].items))
-        #print("3. :", dir(list_widget_files[0].get))
-        #print("4. :", dir(list_widget_files[0].values))
+            # 조건을 모두 만족하여 데이터가 입력된 경우, 다른 모듈의 데이터와 연결하여 리스트 제작
+            if dict_widget_files :
+                list_dict_widget_files.append(dict_widget_files)
 
-        #cls = getattr(list_widget_files[0]["module"], list_widget_files[0]["name"])
-        #print(type(cls), "\n\n", cls)
-        list_inspect = Header.inspect.getmembers(list_widget_files[0]["module"], Header.inspect.isclass) # 모듈의 클래스 확인
-        print("A", list_inspect)
-        cls_ins = None
-        for l in reversed(list_inspect) :
-            if l[0] == list_widget_files[0]["name"] : cls_ins = l # 모듈의 클래스 리스트에서 필요한 클래스 추출
-        print("B", cls_ins)
-        print("C", cls_ins[1]) # 모듈(파일) 이름과 클래스 이름이 같아야 함
-
-        func_inspect = Header.inspect.getmembers(cls_ins[1], Header.inspect.isfunction) # 클래스의 함수 추출
-        print("D", func_inspect)
-
-        init_ins = None
-        fun_ins = None
-        for k in func_inspect :
-            if k[0] == "setWidgetData" : 
-                fun_ins = k # 함수 명칭을 통해 특정 함수 추출
-            elif k[0] == "__init__" :
-                init_ins = k
-        print("E", fun_ins)
-        print("F", init_ins)
-
-        obj = cls_ins[1]() # 객체 생성
-        #obj = init_ins[1](obj) # 생성자 함수로는 객체 생성 불가능
-        print(type(cls_ins[1])) # wrapper 타입
-        print(type(obj)) # 객체 타입 - 객체 생성 가능함
-
-        fun_ins[1](obj, 5, 5) # 함수 실행 - 파라미터는 아직 확인할 수 없음
-        lis = obj.getWidgetData() # 일반적인 함수호출 가능, 리턴 가능
-        print("lis", lis)
-
-        fun_sig = Header.inspect.signature(fun_ins[1]) # 함수 파라미터 정보를 가져옴
-        init_sig = Header.inspect.signature(init_ins[1])
-        print("G", type(fun_sig), fun_sig)
-        print("H", fun_sig.parameters.values(), len(fun_sig.parameters.values())) # 파라미터 목록과 개수
-        
-        list_parm = []
-        list_parm_value = []
-        for a in fun_sig.parameters.values() :
-            print(type(a.name), a.name, type(a.default), a.default, type(a.kind), a.kind)
-            if a.default == Header.inspect._empty :
-                if str(a.name) != "self" : 
-                    print("need to set parameter :", a.name)
-                    list_parm.append(a.name)
-        print("I", list_parm)
-        list_parm_value.append(obj)
-        for b in list_parm :
-            list_parm_value.append(99)
-        print("J", list_parm_value)
-        parm = fun_sig.bind(*list_parm_value) # 리스트 언패킹으로 파라미터 전달
-        #parm = fun_sig.bind(list_parm_value[0], list_parm_value[1], list_parm_value[2])
-        #parm = fun_sig.bind(obj, 7, 7)
-        fun_ins[1](*parm.args, **parm.kwargs) # 바인드 되어있는 파라미터 정보로 함수 호출
-        parm = fun_sig.bind(obj, 55, 55)
-        fun_ins[1](*parm.args, **parm.kwargs)
-        
-        #fun_arg = Header.inspect.getargspec(fun_ins[1]) # 함수 파라미터 정보
-        #init_arg = Header.inspect.getargspec(init_ins[1])
-        #print("I", fun_arg)
-        #print("J", init_arg)
-
-        # self.지역변수를 객체 생성 이전에 알 방법 없음
-        #init_code = Header.inspect.getmembers(init_ins[1], Header.inspect.iscode)
-        #print("K", init_code[0][1].co_varnames) # 함수의 지역변수 목록
-        #cls_code = Header.inspect.getmembers(cls_ins[1], Header.inspect.iscode)
-        #print("L", cls_code)
-
-        return list_widget_files
+        #print("list_dict_widget_files :", list_dict_widget_files)
+        return list_dict_widget_files
 
     def displayWidgetFileList(self, list_widgetfiles) :
         # 확인한 위젯 파일들의 목록을 위젯 형태로 만들어 표시함
-        print("do displayWidgetFileList")
+        # list_widgetfiles = [ { name, path, class, function } ... ]
+        for widget_info in list_widgetfiles :
+            widgetfile = self.makeWidgetFile(widget_info)
+            self.layout.addWidget(widgetfile)
+            self.setWidgetHeight(True, self.height_widget_file)

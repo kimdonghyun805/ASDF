@@ -10,7 +10,6 @@ class Toolbar (Header.QToolBar) :
         self.font = font
         #self.font.setBold(True)
         #self.font.setPixelSize(30)
-        
 
         self.color_black = "Color : black"
         icon_size = 40
@@ -27,19 +26,19 @@ class Toolbar (Header.QToolBar) :
         self.addSeparator()
 
         self.addSeparator()
-        action_new = Header.QAction(self.icon_new, "Make New Widget File", self)
+        action_new = Header.QAction(self.icon_new, "새로운 위젯 파일을 생성합니다.", self)
         action_new.triggered.connect(lambda : self.makeNewWidgetFile())
         self.addAction(action_new)
         self.addSeparator()
 
         self.addSeparator()
-        action_save = Header.QAction(self.icon_save, "Save Program", self)
+        action_save = Header.QAction(self.icon_save, "현재 프로그램을 저장합니다.", self)
         action_save.triggered.connect(lambda : self.saveProgram())
         self.addAction(action_save)
         self.addSeparator()
 
         self.addSeparator()
-        action_load = Header.QAction(self.icon_load, "Load Program", self)
+        action_load = Header.QAction(self.icon_load, "저장된 프로그램을 불러옵니다.", self)
         action_load.triggered.connect(lambda : self.loadProgram())
         self.addAction(action_load)
         self.addSeparator()

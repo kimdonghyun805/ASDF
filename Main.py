@@ -118,9 +118,15 @@ if __name__ == "__main__" :
     path_resources = "Resources"
     path_savefiles = "SaveFiles"
     path_widgetfiles = "WidgetFiles"
-    path_now = Header.os.path.realpath(__package__)
-    print(path_now)
-    Header.sys.path.append(path_now + "\\" + path_widgetfiles)
+    #path_now = Header.os.path.realpath(__package__)
+    try :
+        path_now = Header.os.getcwd() # 현재 작업 디렉토리의 경로
+        # 현재 작업 디렉토리 아래의 위젯 파일 폴더의 경로를 모듈 탐색 경로에 추가
+        Header.sys.path.append(path_now + "\\" + path_widgetfiles)
+    except :
+        print("current work directory access denied")
+        Header.sys.exit(0)
+
     title = "ASDF"
 
     size_x_main = 1280

@@ -84,7 +84,7 @@ def makeProgramming(size_x, size_y, dictionary_icon, font, path_savefiles) :
     f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
     f.setPointSize(10)
     f.setPixelSize(15)
-    f.setItalic(True)
+    #f.setItalic(True)
     programming = Programming(size_x, size_y, dictionary_icon, f, path_savefiles)
     return programming
 
@@ -158,6 +158,8 @@ if __name__ == "__main__" :
 
     programming = makeProgramming(size_x_programming, size_y_programming, dictionary_icon, font, path_savefiles)
     main.layout.addWidget(programming)
+
+    widget_list.signal_add.connect(programming.checkParameters)
 
     print("start")
     main.show()

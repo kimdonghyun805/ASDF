@@ -1,6 +1,8 @@
 import Header
 
 class WidgetList (Header.QScrollArea) :
+    signal_add = Header.pyqtSignal(dict)
+
     def __init__(self, size_x, size_y, dictionary_icon, font, path_widgetfiles) :
         super().__init__()
         self.size_x = size_x
@@ -51,14 +53,14 @@ class WidgetList (Header.QScrollArea) :
             # false인 경우 down - 높이 감소
             if now_height_widget >= 0 :
                 self.now_height_widget = self.now_height_widget - height - 10
+                if self.now_height_widget < 0 : 
+                    self.now_height_widget = 0
         self.widget.setFixedHeight(self.now_height_widget)
 
     def makeWidgetFile(self, data_widgetfile) :
         name = data_widgetfile["name"]
         path = data_widgetfile["path"]
-        widget_class = data_widgetfile["class"]
-        widget_function = data_widgetfile["function"]
-        func_info = widget_function["getInfo"]
+        func_info = data_widgetfile["function"]["getInfo"]
 
         widget_file = Header.QGroupBox()
         width = 200
@@ -92,7 +94,7 @@ class WidgetList (Header.QScrollArea) :
         button_add.setIconSize(Header.QSize(35, 35))
         button_add.move(140, 60)
         button_add.setToolTip("이 위젯을 사용하기 위해 생성합니다.")
-        button_add.clicked.connect(lambda : self.makeWidget())
+        button_add.clicked.connect(lambda : self.makeWidget(data_widgetfile))
 
         widget_file.setStyleSheet("border-style : solid; border-width : 2px; border-color : #000000;")
         return widget_file
@@ -115,13 +117,16 @@ class WidgetList (Header.QScrollArea) :
         info = func_info(None)
         self.dialog.setWindowTitle(name + " 위젯 정보")
         self.info_dialog.setText(info)
-        self.dialog.exec()
+        self.dialog.exec_()
 
     def editWidgetFile(self, path) :
         Header.os.popen(path)
 
-    def makeWidget(self) :
+    def makeWidget(self, data_widgetfile) :
+        # data_widgetfile = { name, path, class, function }
         print("do makeWidget")
+        self.signal_add.emit(data_widgetfile)
+
 
     def checkWidgetFile(self) :
         # 폴더 위치에서 위젯 파일들을 확인

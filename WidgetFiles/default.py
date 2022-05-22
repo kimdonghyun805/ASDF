@@ -18,6 +18,8 @@ class default (QWidget) :
         self.is_connected = False # 위젯이 연결되었는지 확인
         self.is_connecting = False # 위젯이 연결 대상이 필요한지 확인
 
+        self.resize(self.size_x, self.size_y)
+
 
     def getData(self) : # 위젯의 데이터를 리턴
         data = {}

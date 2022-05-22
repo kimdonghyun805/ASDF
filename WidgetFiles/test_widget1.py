@@ -7,16 +7,19 @@ from PyQt5.QtCore import QSize, QPoint, Qt, pyqtSignal
 class test_widget1 (QWidget) :
     x = 2
     y = 3
-    def __init__(self) :
+    def __init__(self, name, order) :
         super().__init__()
 
         self.size_x = 400
         self.size_y = 400
-        self.order = -1
+        self.name = name
+        self.order = order
         self.resize(self.size_x, self.size_y)
         z = 4
-        self.textfield = QTextEdit()
-        self.textfield.resize(self.size_x, self.size_y)
+        self.textfield = QTextEdit(self)
+        self.textfield.resize(self.size_x - 10, self.size_y - 10)
+        self.textfield.move(5, 5)
+        print("test_widget1 created")
 
     def connectWidget(self) :
         print("do connectWidget 1")

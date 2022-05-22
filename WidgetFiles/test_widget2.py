@@ -7,8 +7,14 @@ from PyQt5.QtCore import QSize, QPoint, Qt, pyqtSignal
 
 class test_widget2 (QWidget) :
 
-    def __init__(self) :
+    def __init__(self, name, order, x, y, z) :
         super().__init__()
+
+        self.name = name
+        self.x = int(x)
+        self.y = int(y)
+        self.x = int(z)
+        self.order = int(order)
 
         self.size_x = 400
         self.size_y = 400

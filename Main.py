@@ -82,8 +82,9 @@ def makeWidgetList(size_x, size_y, dictionary_icon, font, path_widgetfiles) :
 def makeProgramming(size_x, size_y, dictionary_icon, font, path_savefiles) :
     # 프로그래밍 인터페이스 객체를 만들어 리턴
     f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
-    f.setPointSize(10)
-    f.setPixelSize(15)
+    f.setPointSize(20)
+    f.setPixelSize(16)
+    f.setBold(False)
     #f.setItalic(True)
     programming = Programming(size_x, size_y, dictionary_icon, f, path_savefiles)
     return programming

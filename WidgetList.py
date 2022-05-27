@@ -144,13 +144,18 @@ class WidgetList (Header.QScrollArea) :
         # 파이썬 파일 리스트에서 각 파일을 모듈로 임포트하여 (name, module)의 리스트인 list_widget_file 제작
         for file_py in list_python_files :
             t_name = file_py[:-3] # 파일 이름에서 .py 제거 -> 모듈 이름
-            t_module = Header.importlib.import_module(t_name, self.path_widgetfiles)
-            if t_name != "default" : # 기본 파일은 인식하지 않음
-                tuple_widget = (t_name, t_module)
-                list_widget_files.append(tuple_widget)
+            try :
+                t_module = Header.importlib.import_module(t_name, self.path_widgetfiles)
+                if t_name != "default" : # 기본 파일은 인식하지 않음
+                    tuple_widget = (t_name, t_module)
+                    list_widget_files.append(tuple_widget)
+            except :
+                # 위젯 파일을 import 할 수 없는 경우
+                print("errors at widget file :", t_name)
+                continue
         #print("list_widget_files :", list_widget_files)
 
-        list_mandatory_func = ["__init__", "setOrder", "getOrder", "setData", "getData", "setLocation", "getInfo", "deleteWidget"]
+        list_mandatory_func = ["__init__", "setOrder", "getOrder", "setData", "getData", "getSize", "getInfo", "getName", "setName", "getKind", "deleteWidget"]
         list_dict_widget_files = []
         for file_widget in list_widget_files :  # 각 모듈에 대해
             dict_widget_files = {}

@@ -16,12 +16,12 @@ class test_widget2 (QWidget) :
         self.z = int(z)
         self.order = int(order)
 
-        self.size_x = 400
-        self.size_y = 400
+        self.size_x = 200
+        self.size_y = 200
         self.resize(self.size_x, self.size_y)
 
         self.widget = QGroupBox(self)
-        self.widget.resize(self.size_x, self.size_y)
+        self.widget.resize(self.size_x - 5, self.size_y - 5)
         #self.widget.setParent(self)
         #self.widget.show()
 
@@ -37,22 +37,43 @@ class test_widget2 (QWidget) :
     def connectWidget(self) :
         print("do connectWidget 2")
 
-    def getData(self) :
-        print("do getWidgetData 2")
-
-    def setData(self, name, x, y) :
+    def editData(self, name, x, y) : 
+        # 위젯의 특정 데이터를 수정
         self.name = str(name)
         self.size_x = int(x)
         self.size_y = int(y)
+        # 입력되는 데이터에 따라 위젯을 조정
         self.resize(self.size_x, self.size_y)
-        self.textfield.resize(self.size_x, self.size_y)
-        print("do setWidgetData 2", str(self.size_x), str(self.size_y))
+        self.widget.resize(self.size_x - 5, self.size_y - 5)
+
+    def getData(self) :
+        data = {}
+        data["name"] = self.name
+        data["order"] = self.order
+        data["kind"] = self.kind
+        data["size_x"] = self.size_x
+        data["size_y"] = self.size_y
+        data["is_connected"] = self.is_connected
+        data["is_connecting"] = self.is_connecting
+        return data
+
+    def setData(self, data) :
+        self.name = data["name"]
+        self.order = data["order"]
+        #self.kind = data["kind"] # 재설정할 필요 없는 데이터
+        self.size_x = data["size_x"]
+        self.size_y = data["size_y"]
+        self.is_connected = data["is_connected"]
+        #self.is_connecting = data["is_connecting"] # 재설정할 필요 없는 데이터
+        # 입력되는 데이터에 따라 위젯을 조정
+        self.resize(self.size_x, self.size_y)
+        self.widget.resize(self.size_x - 5, self.size_y - 5)
 
     def getOrder(self) : return self.order
 
-    def setOrder(self, order) : self.order = order
+    def setOrder(self, order) : self.order = int(order)
 
-    def getInfo(self) : pass
+    def getInfo(self) : return "info about test_widget2"
 
     def getSize(self) : return (self.size_x, self.size_y)
 

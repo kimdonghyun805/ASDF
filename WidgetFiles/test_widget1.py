@@ -22,27 +22,36 @@ class test_widget1 (QWidget) :
     def connectWidget(self) :
         print("do connectWidget 1")
 
+    def editData(self, name) :
+        self.name = str(name)
+
     def getData(self) :
         print("do getWidgetData 1")
-        info = []
-        info.append(self.size_x)
-        info.append(self.size_y)
-        return info
+        data = {}
+        data["name"] = self.name
+        data["order"] = self.order
+        data["kind"] = self.kind
+        data["size_x"] = self.size_x
+        data["size_y"] = self.size_y
+        data["is_connected"] = self.is_connected
+        data["is_connecting"] = self.is_connecting
+        return data
 
-    def setData(self, name, x, y) :
-        self.name = str(name)
-        self.size_x = int(x)
-        self.size_y = int(y)
+    def setData(self, data) :
+        self.name = data["name"]
+        self.order = data["order"]
+        #self.kind = data["kind"] # 재설정할 필요 없는 데이터
+        self.size_x = data["size_x"]
+        self.size_y = data["size_y"]
+        self.is_connected = data["is_connected"]
+        #self.is_connecting = data["is_connecting"] # 재설정할 필요 없는 데이터
+        # 입력되는 데이터에 따라 위젯을 조정함
         self.resize(self.size_x, self.size_y)
         self.textfield.resize(self.size_x - 10, self.size_y - 10)
 
-    def setOrder(self, order) :
-        self.order = order
-        print("do setOrder")
+    def setOrder(self, order) : self.order = int(order)
 
-    def getOrder(self) : 
-        print("do getOrder")
-        return self.order
+    def getOrder(self) : return self.order
 
     def getInfo(self) :
         info = "widget information of test_widget1"
@@ -55,9 +64,7 @@ class test_widget1 (QWidget) :
 
     def getKind(self) : return self.kind
 
-    def getSize(self) :
-        print("do getSize")
-        return (self.size_x, self.size_y)
+    def getSize(self) : return (self.size_x, self.size_y)
 
     def deleteWidget(self) :
         print("do deleteWidget")

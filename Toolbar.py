@@ -17,9 +17,9 @@ class Toolbar (Header.QToolBar) :
         self.setMovable(False)
 
         self.addSeparator()
-        label_widgets = Header.QLabel("위젯Widgets")
+        label_widgets = Header.QLabel("위젯 목록")
         label_widgets.setFont(self.font)
-        label_widgets.setFixedWidth(250)
+        label_widgets.setFixedWidth(240)
         label_widgets.setAlignment(Header.Qt.AlignCenter)
         label_widgets.setStyleSheet(self.color_black)
         self.addWidget(label_widgets)

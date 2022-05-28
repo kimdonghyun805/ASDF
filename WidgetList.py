@@ -124,7 +124,7 @@ class WidgetList (Header.QScrollArea) :
 
     def makeWidget(self, data_widgetfile) :
         # data_widgetfile = { name, path, class, function }
-        print("do makeWidget")
+        #print("do makeWidget")
         self.signal_add.emit(data_widgetfile)
 
 
@@ -155,7 +155,10 @@ class WidgetList (Header.QScrollArea) :
                 continue
         #print("list_widget_files :", list_widget_files)
 
-        list_mandatory_func = ["__init__", "setOrder", "getOrder", "setData", "getData", "getSize", "getInfo", "getName", "setName", "getKind", "deleteWidget"]
+        # 필수 함수 editData, getData, setData, getOrder, setOrder, getInfo, 
+        #           getSize, getName, setName, getKind, deleteWidget
+        list_mandatory_func = ["__init__", "editData", "getData", "setData", "getOrder", "setOrder",
+                               "getInfo", "getSize", "getName", "setName", "getKind", "deleteWidget"]
         list_dict_widget_files = []
         for file_widget in list_widget_files :  # 각 모듈에 대해
             dict_widget_files = {}

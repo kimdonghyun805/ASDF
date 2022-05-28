@@ -14,6 +14,7 @@ class Programming(Header.QWidget) :
         self.path_savefiles = path_savefiles
 
         self.order = 0
+        self.setAcceptDrops(True)
 
         self.resize(Header.QSize(self.size_x, self.size_y))
         self.setFixedSize(self.size_x, self.size_y)
@@ -22,6 +23,7 @@ class Programming(Header.QWidget) :
         self.widget.resize(Header.QSize(self.size_x - 20, self.size_y - 20))
         self.setFixedSize(self.size_x - 20, self.size_y - 20)
         self.widget.move(0, 0)
+        #self.widget.setAcceptDrops(True)
 
         self.widget.setStyleSheet("border-style : solid; border-width : 2px; border-color : #00FF00;")
         self.title = Header.QLabel("Programming", self.widget)
@@ -36,10 +38,10 @@ class Programming(Header.QWidget) :
         self.dict_parm_dialog = {}
         self.dialog_parameter = self.makeParameterDialog()
     
-        self.dialog_error, self.label_error_message = self.makeErrorDialog()
+        self.dialog_error = self.makeErrorDialog()
 
         self.list_widget = []
-        self.list_frame = [] # [ {frame, label, order}, ... ]
+        self.list_frame = []
         self.list_data_widget = []
         self.num_widget = 0
 
@@ -59,7 +61,7 @@ class Programming(Header.QWidget) :
         button_close.move(180, 80)
         button_close.clicked.connect(dialog.close)
 
-        return dialog, label_message
+        return dialog
 
     def showErrorDialog(self, error_no) :
         # error_no
@@ -73,7 +75,10 @@ class Programming(Header.QWidget) :
         else :
             message = "알수 없는 오류가 발생했습니다."
 
-        self.label_error_message.setText(message)
+        #self.label_error_message.setText(message)
+        #print("child :", self.dialog_error.findChild(Header.QLabel))
+        label = self.dialog_error.findChild(Header.QLabel)
+        label.setText(message)
         self.dialog_error.exec_()
 
 
@@ -128,7 +133,6 @@ class Programming(Header.QWidget) :
         self.dialog_parameter = self.makeParameterDialog()
         self.size_x_dialog = self.size_x_dialog_default
         self.size_y_dialog = self.size_y_dialog_default
-
         del(self.dict_parm_dialog)
         self.dict_parm_dialog = {}
 
@@ -141,7 +145,6 @@ class Programming(Header.QWidget) :
         # 위젯 파일의 정보를 받아 위젯 객체 생성
         #print("do checkParameter")
         #print("widget file :", data_widgetfiles)
-
         if self.num_widget >= 10 :
             self.showErrorDialog(2)
             return
@@ -151,6 +154,8 @@ class Programming(Header.QWidget) :
 
         # 생성자의 파라미터 확인
         func_init = data_widgetfiles["function"]["__init__"]
+        func_edit_data = data_widgetfiles["function"]["editData"]
+        print("func_edit_data :", type(func_edit_data), func_edit_data)
         parm_init = Header.inspect.signature(func_init).parameters.values()
 
         # 입력받아야 하는 파라미터 추출
@@ -211,8 +216,8 @@ class Programming(Header.QWidget) :
         # 위젯 프레임(이름, 이동, 수정, 삭제 버튼) 제작
         # 위젯 프레임에 위젯 객체를 올리고 화면에 표시
         # 프레임이 아닌 위젯 객체를 리스트 list_widget에 저장
-        print("do createWidget")
-        print("list_parm_value :", list_parm_value)
+        #print("do createWidget")
+        #print("list_parm_value :", list_parm_value)
         object_widget = None
         try :
             if list_parm_value :
@@ -228,75 +233,160 @@ class Programming(Header.QWidget) :
             self.showErrorDialog(1)
             return
 
-        print("create widget object :", object_widget)
-        print("widget order :", object_widget.order)
+        #print("create widget object :", object_widget)
+        #print("widget order :", object_widget.order)
+        #print("obj.func :", func(object_widget.setData))
         
         self.list_widget.append(object_widget)
         self.num_widget = self.num_widget + 1
 
-        # 위젯을 표시하고 버튼을 표시할 프레임 제작
-        data_frame = self.makeWidgetFrame(object_widget)
-        data_frame["order"] = object_widget.getOrder()
-        self.list_frame.append(data_frame)
-
-        frame_widget = data_frame["frame"]
-        self.list_frame.append(frame_widget)
-        #frane_widget.setParent(self.widget)
-
-        object_widget.setParent(frame_widget)
-        object_widget.move(5, 30)
+        # 위젯과 버튼을 표시할 프레임 제작
+        frame = self.makeWidgetFrame(object_widget)
+        self.list_frame.append(frame)
+        
         loc_x, loc_y = self.setInitialLocation()
-        frame_widget.move(loc_x, loc_y)
-        #self.widget.show()
-        frame_widget.show()
+        frame.move(loc_x, loc_y)
+        frame.show()
         #object_widget.show()
-
-        print("list_widget :", self.list_widget)
+        #print("list_widget :", self.list_widget)
 
     def makeWidgetFrame(self, object) :
-        data_frame = {}
-
-        frame = Header.QWidget(self.widget)
         (x, y) = object.getSize()
-        frame.setFixedSize(x + 10, y + 30)
-        frame.setStyleSheet("background-color : white;")
-        
-        label_name = Header.QLabel(object.getName(), frame)
-        label_name.setFont(self.font)
-        label_name.move(5, 5)
+        frame = WidgetFrame(x, y, object.getOrder(), self.font, self.icon_move, self.icon_edit, self.icon_close)
+        frame.setParent(self.widget)
+        frame.setWidget(object)
+        frame.setName(object.getName())
+        object.move(5, 30)
 
-        button_move = Header.QPushButton("", frame)
-        button_move.setIcon(self.icon_move)
-        button_move.setIconSize(Header.QSize(20, 20))
-        button_move.move(x - 85, 5)
-        button_move.clicked.connect(self.moveWidget)
-
-        button_edit = Header.QPushButton("", frame)
-        button_edit.setIcon(self.icon_edit)
-        button_edit.setIconSize(Header.QSize(20, 20))
-        button_edit.move(x - 55, 5)
-        button_edit.clicked.connect(self.editWidgetData)
-
-        button_close = Header.QPushButton("", frame)
-        button_close.setIcon(self.icon_close)
-        button_close.setIconSize(Header.QSize(20, 20))
-        button_close.move(x - 25, 5)
-        button_close.clicked.connect(self.closeWidget)
-
-        data_frame["frame"] = frame
-        data_frame["name"] = label_name
-        return data_frame
+        return frame
 
     def setInitialLocation(self) :
         x = Header.random.randint(10, 60)
         y = Header.random.randint(10, 70)
         return x, y
 
-    def moveWidget(self) :
-        print("do moveWidget")
+    # 드래그 드롭 관련 함수
+    def dragEnterEvent(self, e : Header.QDragEnterEvent) :
+        e.accept()
+
+    def dropEvent(self, e : Header.QDropEvent) :
+        position = e.pos()
+        # 전송되는 데이터를 받음
+        # 그랩 당시 마우스의 위치값을 계산하여 위젯 위치 보정
+        try :
+            mime_str = "move widget"
+            #print("drop str :", mime_str)
+            offset = e.mimeData().data(mime_str)
+            #print("offset : ", offset)
+            order = offset.data().decode('utf-8')
+            #print("order :", order, "position :", position)
+            #print("list_frame :", self.list_frame)
+            for frame in self.list_frame :
+                #print("frame order :", frame.order)
+                if frame.order == int(order) :
+                    #print("move frame :", int(order))
+                    frame.move(position - Header.QPoint(15, 15))
+
+            e.setDropAction(Header.Qt.MoveAction)
+            e.accept()
+        except : 
+            print("Error in drop event")
+
+
+# 위젯의 이름과 버튼을 표시할 프레임 클래스
+class WidgetFrame(Header.QWidget) :
+    def __init__(self, size_x, size_y, order, font, icon_move, icon_edit, icon_close) :
+        super().__init__()
+        self.size_x = size_x
+        self.size_y = size_y
+        self.order = order
+        self.widget = None
+        self.bg = Header.QWidget(self)
+
+        self.setAcceptDrops(True)
+
+        self.setFixedSize(self.size_x + 10, self.size_y + 30)
+        self.bg.setFixedSize(self.size_x + 10, self.size_y + 30)
+        #self.setStyleSheet("background-color : gray;")
+        self.bg.setStyleSheet("background-color : #FFFFFFFF;")
+
+        self.label_name = Header.QLabel("", self.bg)
+        self.label_name.setFont(font)
+        self.label_name.move(35, 5)
+
+        self.button_move = DragPushButton("", self.order, self.bg)
+        self.button_move.setIcon(icon_move)
+        self.button_move.setIconSize(Header.QSize(20, 20))
+        self.button_move.move(5, 5)
+
+        self.button_edit = Header.QPushButton("", self.bg)
+        self.button_edit.setIcon(icon_edit)
+        self.button_edit.setIconSize(Header.QSize(20, 20))
+        self.button_edit.move(self.size_x - 55, 5)
+        self.button_edit.clicked.connect(self.editWidgetData)
+
+        self.button_close = Header.QPushButton("", self.bg)
+        self.button_close.setIcon(icon_close)
+        self.button_close.setIconSize(Header.QSize(20, 20))
+        self.button_close.move(self.size_x - 25, 5)
+        self.button_close.clicked.connect(self.closeWidget)
+
+    def setName(self, name) :
+        self.label_name.setText(name)
+
+    def setWidget(self, widget) :
+        self.widget = widget
+        widget.setParent(self.bg)
+
+    def getWidget(self) : return self.widget
+
+    def setSize(self, x, y) :
+        self.size_x = x
+        self.size_y = y
+        self.setFixedSize(self.size_x + 10, self.size_y + 30)
+        self.bg.setFixedSize(self.size_x + 10, self.size_y + 30)
+        self.button_edit.move(self.size_x - 55, 5)
+        self.button_close.move(self.size_x - 25, 5)
 
     def editWidgetData(self) :
-        print("do editWidgetData")
+        # 위젯의 일부 데이터 수정
+        # 프레임은 항상 표시하는 위젯의 이름과
+        # 프레임 자체의 크기를 새롭게 설정해야 함
+        # 위젯의 editData 함수에 따라 데이터를 입력받고 설정함
+        print("do editWidgetData at Frame")
 
     def closeWidget(self) :
-        print("do closeWidget")
+        print("do closeWidget at Frame")
+
+
+# 드래그, 드롭이 가능한 pushbutton 클래스 제작
+class DragPushButton(Header.QPushButton) :
+    def __init__(self, title, order, parent) :
+        #super().__init__(self, title, parent)
+        Header.QPushButton.__init__(self, title, parent)
+        self.p = parent
+        self.order = order
+        self.offset = 0
+
+    def mouseMoveEvent(self, e : Header.QMouseEvent) :
+        # 오른쪽 클릭만 입력 허용
+        if e.buttons() != Header.Qt.LeftButton :
+            return
+
+        # 데이터 전송을 위한 Mime 객체 선언
+        # 데이터 타입, 전송할 데이터를 bytes 형으로 저장함
+        mime_data = Header.QMimeData()
+        mime_str = "move widget"
+        #print("move str :", mime_str)
+        mime_data.setData(mime_str, b"%d" %(self.order))
+
+        drag = Header.QDrag(self)
+        # Mime 데이터를 Drag에 설정
+        drag.setMimeData(mime_data)
+        # 드래그시 버튼의 모양을 유지하기 위해 QPixmap에 모양을 렌더링
+        pixmap = Header.QPixmap(self.size())
+        self.render(pixmap)
+        drag.setPixmap(pixmap)
+
+        drag.setHotSpot(e.pos() - self.rect().topLeft())
+        drag.exec_(Header.Qt.MoveAction)

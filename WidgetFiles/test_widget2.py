@@ -15,6 +15,9 @@ class test_widget2 (QWidget) :
         self.y = int(y)
         self.z = int(z)
         self.order = int(order)
+        self.kind = "test_widget2"
+        self.is_connecting = False
+        self.is_connected = True
 
         self.size_x = 200
         self.size_y = 200

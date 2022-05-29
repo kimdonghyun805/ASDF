@@ -12,7 +12,10 @@ class test_widget1 (QWidget) :
         self.size_y = 400
         self.name = str(name)
         self.order = 0
+        self.kind = "test_widget1"
         self.resize(self.size_x, self.size_y)
+        self.is_connecting = True
+        self.is_connected = False
         
         self.textfield = QTextEdit(self)
         self.textfield.resize(self.size_x - 10, self.size_y - 10)

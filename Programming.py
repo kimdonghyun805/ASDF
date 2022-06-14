@@ -69,6 +69,8 @@ class Programming(Header.QWidget) :
         # 2 : 위젯 생성 제한 초과
         # 3 : 위젯 데이터 수정시 잘못된 데이터 입력
         # 4 : 위젯에 연결 정보 확인 변수(is_connecting, is_connected) 가 없음
+        # 5 : 위젯의 연결에 필요한 함수 connectWidget이 작성되어있지 않거나, 오류가 있음
+        # 6 : 연결시 지정한 위젯이 존재하지 않음
         message = ""
         if (error_no == 1) :
             message = "위젯 파일에 오류가 있거나\n잘못된 데이터가 입력되었습니다."
@@ -78,6 +80,10 @@ class Programming(Header.QWidget) :
             message = "위젯의 데이터 수정기능에\n오류가 있거나 잘못된 데이터가\n입력되었습니다."
         elif (error_no == 4) :
             message = "위젯의 특정 데이터가 손실되어 있습니다."
+        elif (error_no == 5) :
+            message = "위젯의 연결에 필요한 기능에\n문제가 있습니다."
+        elif (error_no == 6) :
+            message = "지정한 위젯이 존재하지 않습니다."
         else :
             message = "알수 없는 오류가 발생했습니다."
 
@@ -159,7 +165,13 @@ class Programming(Header.QWidget) :
         # 생성자의 파라미터 확인
         func_init = data_widgetfiles["function"]["__init__"]
         func_edit_data = data_widgetfiles["function"]["editData"]
-        #print("func_edit_data :", type(func_edit_data), func_edit_data)
+        func_connect_widget = None #data_widgetfiles["function"]["connectWidget"]
+        if data_widgetfiles["connecting"] :
+            func_connect_widget = data_widgetfiles["function"]["connectWidget"]
+            print("func_connect_widget :", type(func_connect_widget), func_connect_widget)
+        else :
+            print("no have func connectWidget")
+
         parm_init = Header.inspect.signature(func_init).parameters.values()
 
         # 입력받아야 하는 파라미터 추출
@@ -197,21 +209,22 @@ class Programming(Header.QWidget) :
                         list_parm_value.append(value)
                 self.need_to_set_parameter = False
                 # 입력된 파라미터에 따라 위젯 생성
-                self.createWidget(class_widget, list_parm_value, func_edit_data)
+                self.createWidget(class_widget, list_parm_value, func_edit_data, func_connect_widget)
 
         else : # 파라미터가 self 혹은 self, order 뿐인 경우
             if "order" in list_parm_name :
                 self.order = self.order + 1
                 list_parm_value.append(self.order)
                 # 입력된 파라미터에 따라 위젯 생성
-                self.createWidget(class_widget, list_parm_value, func_edit_data)
+                self.createWidget(class_widget, list_parm_value, func_edit_data, func_connect_widget)
  
-    def createWidget(self, class_widget, list_parm_value, func_edit) :
+
+    def createWidget(self, class_widget, list_parm, func_edit, func_connect) :
         # 위젯의 객체를 생성
         object_widget = None
         try :
-            if list_parm_value :
-                object_widget = class_widget(*list_parm_value)
+            if list_parm :
+                object_widget = class_widget(*list_parm)
             else :
                 object_widget = class_widget()
             if object_widget.getOrder() == 0 : # 생성시 order가 지정되지 않은 경우
@@ -222,15 +235,92 @@ class Programming(Header.QWidget) :
             self.showErrorDialog(1)
             return
 
-        # 연결 대상이 필요한 경우를 확인하고 지정함 - 작성중
+        # 연결 대상이 필요한 경우를 확인하고 지정함
         try :
             if object_widget.is_connecting :
-                print("widget need connecting")
+                #print("widget need connecting")
+                if not func_connect : # 위젯에 connectWidget 함수가 작성되어 있지 않은 경우
+                    self.showErrorDialog(5)
+                    return
+
+                # 연결 위젯이 필요로 하는 위젯을 파라미터를 통해 확인
+                # 파라미터 명칭 = 위젯의 종류(kind)
+                # 연결에 필요한 위젯이 현재 생성되어 있어야 함
+                # 필요한 위젯이 하나라도 생성되어 있지 않은 경우, 에러 발생
+                parm_init = Header.inspect.signature(func_connect).parameters.values()
+
+                # 입력받아야 하는 파라미터 추출
+                list_parm_name = [] # 설정해야 하는 모든 파라미터 리스트
+                list_parm_input = [] # 입력해야 하는 파라미터 리스트
+                list_parm_value = [] # 입력한 파라미터 값(위젯 이름)이 저장될 리스트
+                list_parm_widget = [] # 입력한 위젯 이름에 대한 위젯 객체가 저장될 리스트
+                for parm in parm_init :
+                    if parm.default == Header.inspect._empty :
+                        name = parm.name
+                        list_parm_name.append(name)
+                        if name != "self" :
+                            list_parm_input.append(name)
+
+                # 파라미터에 연결될 위젯의 이름을 입력받음
+                # 다이얼로그 비우기
+                self.clearParameterDialog()
+                if list_parm_input : # 입력할 파라미터가 있는 경우
+                    # 다이얼로그로 파라미터를 입력받아 파라미터 리스트 제작
+                    for parm in list_parm_input : # 입력할 파라미터 추가
+                        self.appendParameterDialog(parm)
+
+                    # 다이얼로그에 확인 버튼 추가 후 실행
+                    self.appendParameterDialogButton()
+                    self.dialog_parameter.exec_()
+                
+                    if self.need_to_set_parameter : # 확인 버튼이 입력된 경우
+                        for parm in list_parm_name : # 파라미터 정보를 변환
+                            if parm == "self" :
+                                pass
+                            else :
+                                value = self.dict_parm_dialog[parm].text()
+                                if not value : value = 0
+                                list_parm_value.append(value)
+                        self.need_to_set_parameter = False
+
+                        # 입력된 파라미터에 따라 위젯 연결
+                        # 입력받은 값은 위젯의 이름(name)
+                        # 파라미터 명칭으로 지목된 kind의 위젯을 확인, 입력값과 이름이 같은 경우 연결 대상이 됨
+                        for n in range(0, len(list_parm_input)) :
+                            print(str(list_parm_value[n]))
+                            list_widget_kind = self.getWidgetListAsKind(str(list_parm_input[n]))
+                            is_found = False
+                            if not list_widget_kind :
+                                self.showErrorDialog(6)
+                                return
+                            for w in list_widget_kind :
+                                if w.getName() == str(list_parm_value[n]) :
+                                    list_parm_widget.append(w)
+                                    is_found = True
+                            if not is_found :
+                                self.showErrorDialog(6)
+                                return
+                        if len(list_parm_value) != len(list_parm_widget) :
+                            self.showErrorDialog(6)
+                            return
+
+                        # 모든 파라미터에 대해 연결할 위젯을 탐색한 경우
+                        # 위젯의 함수 connectWidget 수행
+                        try :
+                            object_widget.connectWidget(*list_parm_widget)
+                        except :
+                            self.showErrorDialog(5)
+                            return
+                        for w in list_parm_widget :
+                            w.is_connected = True
+                    else : # 연결이 취소된 경우
+                        return
+                else : # 입력할 파라미터(list_parm_value)가 없는 경우
+                    object_widget.connectWidget()
         except :
             #위젯에 is_connecting, is_connected 변수가 없는 경우
             self.showErrorDialog(4)
             return
-        
         self.list_widget.append(object_widget)
         self.num_widget = self.num_widget + 1
 
@@ -241,6 +331,14 @@ class Programming(Header.QWidget) :
         loc_x, loc_y = self.setInitialLocation()
         frame.move(loc_x, loc_y)
         frame.show()
+        #print("now widgets :", self.list_widget)
+
+    def getWidgetListAsKind(self, kind) :
+        list_widget_kind = []
+        for widget in self.list_widget :
+            if widget.getKind() == kind :
+                list_widget_kind.append(widget)
+        return list_widget_kind
 
     def makeWidgetFrame(self, object, func_edit) :
         (x, y) = object.getSize()
@@ -304,7 +402,7 @@ class Programming(Header.QWidget) :
                 try :
                     frame.widget.editData(*list_parm_value)
                 except :
-                    self.showErrorDialog(3)
+                    self.showErrorDialog(3) # 파라미터에 잘못된 값을 입력
                     return
         else : # 파라미터가 self 뿐인 경우
             try :

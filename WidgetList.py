@@ -165,6 +165,7 @@ class WidgetList (Header.QScrollArea) :
             w_name = None
             w_path = None
             w_class = None
+            w_connecting = False
             dict_w_func = {}
             #print(file_widget[1].__file__)
             list_class = Header.inspect.getmembers(file_widget[1], Header.inspect.isclass) # 클래스 목록을 확인하고
@@ -184,11 +185,15 @@ class WidgetList (Header.QScrollArea) :
                             if func[0] == name : # 필수 함수가 작성되어 있는 경우, 정보를 임시로 저장
                                 dict_w_func[name] = func[1]
                                 num_func += 1
+                            if func[0] == "connectWidget" : # 연결을 위한 함수가 작성되어 있는 경우, 정보를 저장
+                                dict_w_func["connectWidget"] = func[1] # 필수 함수가 아니므로 확인을 위한 num_func 값을 조정하지 않음
+                                w_connecting = True # 연결이 필요한지 아닌지 확인할 정보
                     if num_func == len(list_mandatory_func) : # 모든 필수 함수가 작성되어 있는 경우, 딕셔너리에 데이터 저장
                         dict_widget_files["name"] = w_name
                         dict_widget_files["path"] = w_path
                         dict_widget_files["class"] = w_class
                         dict_widget_files["function"] = dict_w_func
+                        dict_widget_files["connecting"] = w_connecting
                     else :
                         print("widget :", w_name, ", lost some mendatory functions :", len(list_mandatory_func) - num_func)
                     break # 이름이 같은 클래스를 찾은 경우 반복문 탈출
@@ -202,7 +207,7 @@ class WidgetList (Header.QScrollArea) :
 
     def displayWidgetFileList(self, list_widgetfiles) :
         # 확인한 위젯 파일들의 목록을 위젯 형태로 만들어 표시함
-        # list_widgetfiles = [ { name, path, class, function } ... ]
+        # list_widgetfiles = [ { name, path, class, function, connecting } ... ]
         for widget_info in list_widgetfiles :
             widgetfile = self.makeWidgetFile(widget_info)
             self.layout.addWidget(widgetfile)

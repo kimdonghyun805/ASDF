@@ -17,39 +17,40 @@ class test_connect (QWidget) :
         # 위젯의 종류에 따라 사용자 임의로 설정, 실행 중 변경 가능
         self.is_connected = False # 위젯이 연결되었는지 확인
         self.is_connecting = True # 위젯이 연결 대상이 필요한지 확인
+        self.list_widget_connected = [] # 연결하여 사용중인 위젯의 목록, 연결 위젯인 경우만 필요
 
         self.resize(self.size_x, self.size_y) # 크기 설정
 
         ######################## 위젯 내용 작성 #######################
-        print("A1")
+        #print("A1")
         self.index = 0
         self.memo_widget = None
         self.paint_widget = None
         self.list_widget_data = []
-        print("A2")
+        #print("A2")
         self.widget = QWidget(self)
         self.widget.resize(self.size_x, self.size_y)
-        print("A3")
+        #print("A3")
         self.label = QLabel(str(self.index), self.widget)
         self.label.resize(self.size_x - 40, self.size_y - 100)
         self.label.move(20, 20)
         self.label.setAlignment(Qt.AlignCenter)
-        print("A4")
+        #print("A4")
         self.next_button = QPushButton("prev", self.widget)
         self.next_button.resize(40, 40)
         self.next_button.move(20, 80)
         self.next_button.clicked.connect(self.prevIndex)
-        print("A5")
+        #print("A5")
         self.prev_button = QPushButton("next", self.widget)
         self.prev_button.resize(40, 40)
         self.prev_button.move(140, 80)
         self.prev_button.clicked.connect(self.nextIndex)
-        print("A6")
+        #print("A6")
         self.save_button = QPushButton("SaveNow", self.widget)
         self.save_button.resize(40, 40)
         self.save_button.move(80, 80)
         self.save_button.clicked.connect(self.saveWidgetData)
-        print("A7")
+        #print("A7")
 
         ##################### 위젯 내용 작성 종료 #######################
 
@@ -109,9 +110,9 @@ class test_connect (QWidget) :
         pass
 
     ##################### 사용자 함수 작성 #########################
-    def connectWidget(self, memo, paint) :
-        self.memo_widget = memo
-        self.paint_widget = paint
+    def connectWidget(self, test_widget1, test_widget2) :
+        self.memo_widget = test_widget1
+        self.paint_widget = test_widget2
         print("do connectWidget :", self.memo_widget, self.paint_widget)
 
     def saveWidgetData(self) :
@@ -125,9 +126,13 @@ class test_connect (QWidget) :
 
     def nextIndex(self) :
         self.index = self.index + 1
-        self.label.setText(str(self.index))
+        #t = self.name + "(" + str(self.index) + ")"
+        t = self.memo_widget.getName() + "(" + str(self.index) + ")"
+        self.label.setText(t)
 
     def prevIndex(self) :
         self.index = self.index - 1
-        self.label.setText(str(self.index))
+        #t = self.name + "(" +  str(self.index) + ")"
+        t = self.paint_widget.getName() + "(" + str(self.index) + ")"
+        self.label.setText(t)
         

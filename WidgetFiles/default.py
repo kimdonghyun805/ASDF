@@ -17,6 +17,7 @@ class default (QWidget) :
         # 위젯의 종류에 따라 사용자 임의로 설정, 실행 중 변경 가능
         self.is_connected = False # 위젯이 연결되었는지 확인
         self.is_connecting = False # 위젯이 연결 대상이 필요한지 확인
+        self.list_widget_connected = [] # 연결하여 사용중인 위젯의 목록, 연결 위젯인 경우만 필요
 
         self.resize(self.size_x, self.size_y) # 크기 설정
 
@@ -82,5 +83,15 @@ class default (QWidget) :
     def deleteWidget(self) :
         # 상위 위젯에 위젯의 삭제 요청을 보냄
         pass
+
+    ######################## 연결 위젯 필수 함수 #########################
+    # 다른 위젯의 기능을 이용할 수 있는 위젯이 필수적으로 가져야 하는 함수
+    # 생성자 __init__이 실행된 이후 is_connecting이 true인 경우 이어서 실행됨
+    # 파라미터로 연결할 위젯을 지정
+    # 파라미터의 명칭이 연결할 위젯의 파일 이름과 같아야 함
+
+    def connectWidget(self) :
+        pass
+
 
     ##################### 사용자 함수 작성 #########################

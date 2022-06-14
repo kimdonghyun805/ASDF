@@ -14,7 +14,7 @@ class test_widget1 (QWidget) :
         self.order = 0
         self.kind = "test_widget1"
         self.resize(self.size_x, self.size_y)
-        self.is_connecting = True
+        self.is_connecting = False
         self.is_connected = False
         
         self.textfield = QTextEdit(self)

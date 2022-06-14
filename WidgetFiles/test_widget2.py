@@ -17,7 +17,7 @@ class test_widget2 (QWidget) :
         self.order = int(order)
         self.kind = "test_widget2"
         self.is_connecting = False
-        self.is_connected = True
+        self.is_connected = False
 
         self.size_x = 200
         self.size_y = 200
@@ -37,8 +37,8 @@ class test_widget2 (QWidget) :
         self.label_z = QLabel(str(self.z), self.widget)
         self.label_z.move(20, 110)
 
-    def connectWidget(self) :
-        print("do connectWidget 2")
+    #def connectWidget(self) :
+     #   print("do connectWidget 2")
 
     def editData(self, name, x, y) : 
         # 위젯의 특정 데이터를 수정

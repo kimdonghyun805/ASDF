@@ -1,27 +1,29 @@
 import Header
 
 class Toolbar (Header.QToolBar) :
-    def __init__(self, dictionary_icon, font, path_savefile) :
+    def __init__(self, dictionary_icon, title_font, error_font, path_savefile, path_widgetfile) :
         super().__init__()
         self.path_savefile = path_savefile
+        self.path_widgetfile = path_widgetfile
         self.icon_new = dictionary_icon["new"]
         self.icon_save = dictionary_icon["save"]
         self.icon_load = dictionary_icon["load"]
-        self.font = font
+        self.title_font = title_font
+        self.error_font = error_font
         #self.font.setBold(True)
         #self.font.setPixelSize(30)
 
-        self.color_black = "Color : black"
+        #self.color_black = "Color : black"
         icon_size = 40
         self.setIconSize(Header.QSize(icon_size, icon_size))
         self.setMovable(False)
 
         self.addSeparator()
         label_widgets = Header.QLabel("위젯 목록")
-        label_widgets.setFont(self.font)
+        label_widgets.setFont(self.title_font)
         label_widgets.setFixedWidth(240)
         label_widgets.setAlignment(Header.Qt.AlignCenter)
-        label_widgets.setStyleSheet(self.color_black)
+        #label_widgets.setStyleSheet(self.color_black)
         self.addWidget(label_widgets)
         self.addSeparator()
 
@@ -43,11 +45,164 @@ class Toolbar (Header.QToolBar) :
         self.addAction(action_load)
         self.addSeparator()
 
+        self.need_to_get_filename = False
+        self.dialog_error = self.makeErrorDialog()
+        self.dialog_file_select = self.makeFileSelectDialog()
+
+
+    # 에러 발생시 원인을 표시하는 다이얼로그
+    def makeErrorDialog(self) :
+        dialog = Header.QDialog(self, Header.Qt.WindowTitleHint | Header.Qt.WindowCloseButtonHint)
+        dialog.setWindowTitle("오류")
+        dialog.setFixedSize(300, 120)
+
+        label_message = Header.QLabel("", dialog)
+        label_message.setFont(self.error_font)
+        label_message.setFixedSize(260, 70)
+        label_message.move(20, 10)
+
+        button_close = Header.QPushButton("닫기", dialog)
+        button_close.setFont(self.error_font)
+        button_close.setFixedSize(100, 30)
+        button_close.move(180, 80)
+        button_close.clicked.connect(dialog.close)
+
+        return dialog
+
+    def showErrorDialog(self, error_no) :
+        # error_no
+        # 1 : 위젯 파일 디렉토리에 접근 불가능, 혹은 default.py 없음
+        # 2 : 위젯 파일 생성 시 이미 존재하는 이름 지정
+        # 3 : 위젯 파일 생성 시 기본 위젯 파일 수정이 불가능
+        message = ""
+        if (error_no == 1) :
+            message = "기본 위젯 파일에 접근할 수 없습니다."
+        elif (error_no == 2) :
+            message = "해당 위젯 파일이 이미 존재합니다."
+        elif (error_no == 3) :
+            message = "기본 위젯 파일을 수정할 수 없습니다."
+        else :
+            message = "알수 없는 오류가 발생했습니다."
+
+        label = self.dialog_error.findChild(Header.QLabel)
+        label.setText(message)
+        self.dialog_error.exec_()
+
+
     def makeNewWidgetFile(self) :
-        print("Do makeNewWidgetFile")
+        #print("Do makeNewWidgetFile")
+        # 위젯 파일 경로에서 default.py 확인
+        list_python_files = []
+        try :
+            list_resources = Header.os.listdir(self.path_widgetfile)
+            list_python_files = list(f for f in list_resources if f.endswith(".py")) # .py 파일 전부 확인
+        except :
+            # 위젯 파일 디렉토리에 접근 불가능
+            self.showErrorDialog(1)
+            return
+
+        path_default = None
+        # 파이썬 파일 리스트에서 각 파일을 모듈로 임포트하여 (name, module)의 리스트인 list_widget_file 제작
+        for file_py in list_python_files :
+            t_name = file_py[:-3] # 파일 이름에서 .py 제거 -> 모듈 이름
+            if t_name == "default" : # 기본 파일 default를 찾은 경우
+                path_default = self.path_widgetfile + "\\default.py"
+
+        if not path_default : # default.py를 찾지 못한 경우
+            self.showErrorDialog(1)
+            return
+
+        # 다이얼로그 설정을 변경하고 실행
+        self.showFileSelectDialog(1)
+        if self.need_to_get_filename : # 다이얼로그에서 확인 버튼이 입력된 경우
+            lineedit = self.dialog_file_select.findChild(Header.QLineEdit)
+            filename = lineedit.text()
+            
+            path_new = self.path_widgetfile + "\\" + filename + ".py"
+            for file_py in list_python_files :
+                t_name = file_py[:-3]
+                if t_name == filename : # 이름이 같은 위젯 파일이 이미 존재하는 경우
+                    self.showErrorDialog(2)
+                    return
+
+            # default.py에서 default 를 filename으로 변경한 후 새로운 파일 생성
+            file_new = open(path_new, 'w', encoding="utf-8") # 파일 생성
+            try :
+                with Header.fileinput.FileInput(path_default, openhook=Header.fileinput.hook_encoded("utf-8")) as f :
+                    print("do with", type(f), f)
+                    for line in f :
+                        if "default" in line :
+                            line = line.replace("default", filename) # 파일에 등장하는 default를 filname으로 변경
+                        file_new.write(line) # default를 한줄 씩 옮겨 작성
+            except :
+                self.showErrorDialog(3)
+                return
+            #print("open default")
+            file_new.close()
+            Header.os.popen(path_new)
+            self.need_to_get_filename = False
+
+    def clickedDialogOk(self, t_or_f) :
+        self.need_to_get_filename = t_or_f
+        self.dialog_file_select.close()
+
+    def makeFileSelectDialog(self) :
+        dialog = Header.QDialog(self, Header.Qt.WindowTitleHint | Header.Qt.WindowCloseButtonHint)
+        dialog.setWindowTitle("파일 이름 입력")
+        dialog.setFixedWidth(300)
+        dialog.setFixedHeight(120)
+
+        label_message = Header.QLabel("", dialog)
+        label_message.setFont(self.error_font)
+        label_message.setFixedSize(280, 30)
+        label_message.setAlignment(Header.Qt.AlignLeft)
+        label_message.move(15, 10)
+
+        label_input = Header.QLineEdit("", dialog) ############################# 뛰어쓰기 허용하지 않도록 수정 필요
+        label_input.setFont(self.error_font)
+        label_input.setFixedSize(260, 30)
+        label_input.move(20, 45)
+
+        button_ok = Header.QPushButton("확인", dialog)
+        button_ok.setFont(self.error_font)
+        button_ok.setFixedSize(100, 30)
+        button_ok.move(70, 85)
+        button_ok.clicked.connect(lambda : self.clickedDialogOk(True))
+
+        button_cancel = Header.QPushButton("취소", dialog)
+        button_cancel.setFont(self.error_font)
+        button_cancel.setFixedSize(100, 30)
+        button_cancel.move(180, 85)
+        button_cancel.clicked.connect(dialog.close)
+
+        return dialog
+
+    def showFileSelectDialog(self, type) :
+        message = ""
+        label = self.dialog_file_select.findChild(Header.QLabel)
+        lineedit = self.dialog_file_select.findChild(Header.QLineEdit)
+        lineedit.setText("")
+        # type
+        # 1 : 새 위젯 파일 생성
+        # 2 : 저장 파일 생성
+        # 3 : 불러올 파일 지정
+        if type == 1 :
+            message = "생성할 위젯 파일의 이름을 입력하세요."
+        elif type == 2 :
+            message = "저장 파일의 이름을 입력하세요."
+        elif type == 3 :
+            message = "불러올 파일의 이름을 입력하세요."
+        else :
+            return # type이 잘못 지정된 경우, 아무것도 실행하지 않음
+
+        label.setText(message)
+        self.dialog_file_select.exec_()
 
     def saveProgram(self) :
         print("Do saveProgram")
 
     def loadProgram(self) :
         print("Do loadProgram")
+
+
+    

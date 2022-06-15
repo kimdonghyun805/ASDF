@@ -5,7 +5,7 @@ from Programming import Programming
 
 def checkDirectory(path) :
     if path_resources :
-        if not Header.os.path.exists :
+        if not Header.os.path.exists : # 디렉토리 존재 확인
             print("Directory not found :", path)
             Header.sys.exit(0)
         else :
@@ -16,7 +16,7 @@ def checkDirectory(path) :
 
 def loadIcon(path_resources, name_icon, type_icon) :
     dictionary_icon = {}
-    for name in name_icon :
+    for name in name_icon : # 이름에 맞는 아이콘 로딩
         path_icon = path_resources + "\\" + name + type_icon
         icon = Header.QIcon(path_icon)
         dictionary_icon[name] = icon
@@ -26,10 +26,7 @@ def loadFont(path_resources, name_font, type_font) :
     path_font = path_resources + "\\" + name_font + type_font
     font_db = Header.QFontDatabase()
     font_db.addApplicationFont(path_font)
-    #font = Header.QFont("Noto Sans KR Black") #폰트 명칭과 파일 명칭이 다름
-    #font.setPointSize(10)
-    #font.setPixelSize(20)
-    font = "Noto Sans KR Black"
+    font = "Noto Sans KR Black" # 폰트 파일명과 폰트 객체의 이름이 다름
     return font
 
 def checkResources(path_resources, type_icon, type_font) :
@@ -39,12 +36,12 @@ def checkResources(path_resources, type_icon, type_font) :
         print("Directory access denied :", path_resources)
         Header.sys.exit(0)
 
-    name_icon = ["add", "close", "edit", "info", "load", "move", "new", "save"]
-    name_font = "NotoSansKR-Black"
+    name_icon = ["add", "close", "edit", "info", "load", "move", "new", "save"] # 아이콘 파일 명칭
+    name_font = "NotoSansKR-Black" # 폰트 파일 명칭
     #name_font = "Koulen-Regular"
 
     lost_icon = []
-    for name in name_icon :
+    for name in name_icon : # 아이콘 명칭과 타입 연결
         name = name + type_icon
         if not name in list_resources :
             lost_icon.append(name)
@@ -62,18 +59,22 @@ def checkResources(path_resources, type_icon, type_font) :
 
     return (dictionary_icon, font)
 
-def makeToolbar(dictionary_icon, font, path_savefile) :
+def makeToolbar(dictionary_icon, font, path_savefile, path_widgetfile) :
     # 툴바 인터페이스 객체를 만들어 리턴
-    f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
-    f.setPointSize(10)
-    f.setPixelSize(30)
-    f.setBold(True)
-    toolbar = Toolbar(dictionary_icon, f, path_savefile)
+    tf = Header.QFont(font)
+    tf.setPointSize(10)
+    tf.setPixelSize(30)
+    tf.setBold(True)
+    ef = Header.QFont(font)
+    ef.setPointSize(20)
+    ef.setPixelSize(16)
+    ef.setBold(False)
+    toolbar = Toolbar(dictionary_icon, tf, ef, path_savefile, path_widgetfile)
     return toolbar
 
 def makeWidgetList(size_x, size_y, dictionary_icon, font, path_widgetfiles) :
     # 위젯리스트 인터페이스 객체를 만들 리턴
-    f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
+    f = Header.QFont(font)
     f.setPointSize(10)
     f.setPixelSize(20)
     widget_list = WidgetList(size_x, size_y, dictionary_icon, f, path_widgetfiles)
@@ -81,11 +82,10 @@ def makeWidgetList(size_x, size_y, dictionary_icon, font, path_widgetfiles) :
 
 def makeProgramming(size_x, size_y, dictionary_icon, font, path_savefiles) :
     # 프로그래밍 인터페이스 객체를 만들어 리턴
-    f = Header.QFont(font) #폰트 명칭과 파일 명칭이 다름
+    f = Header.QFont(font)
     f.setPointSize(20)
     f.setPixelSize(16)
     f.setBold(False)
-    #f.setItalic(True)
     programming = Programming(size_x, size_y, dictionary_icon, f, path_savefiles)
     return programming
 
@@ -112,14 +112,13 @@ class MainWindow (Header.QMainWindow) :
         self.layout = Header.QHBoxLayout()
         self.widget.setLayout(self.layout)
 
-        self.widget.setStyleSheet("border-style : solid; border-width : 2px; border-color : #0000FF;")
+        self.widget.setStyleSheet("border-style : solid; border-width : 2px; border-color : #0000FF;") # 위젯 스타일 - 파랑
 
 
 if __name__ == "__main__" :
     path_resources = "Resources"
     path_savefiles = "SaveFiles"
     path_widgetfiles = "WidgetFiles"
-    #path_now = Header.os.path.realpath(__package__)
     try :
         path_now = Header.os.getcwd() # 현재 작업 디렉토리의 경로
         # 현재 작업 디렉토리 아래의 위젯 파일 폴더의 경로를 모듈 탐색 경로에 추가
@@ -128,8 +127,9 @@ if __name__ == "__main__" :
         print("current work directory access denied")
         Header.sys.exit(0)
 
-    title = "ASDF"
+    title = "ASDF" # 프로그램 제목
 
+    # 각 인터페이스 크기를 고정값으로 설정
     size_x_main = 1280
     size_y_main = 720
 
@@ -139,19 +139,21 @@ if __name__ == "__main__" :
     size_x_programming = 1035
     size_y_programming = 670
 
-    type_icon = ".png"
-    type_font = ".otf"
+    type_icon = ".png" # 아이콘 파일 타입
+    type_font = ".otf" # 폰트 파일 타입
 
+    # 필요한 디렉토리 확인
     checkDirectory(path_resources)
     checkDirectory(path_savefiles)
     checkDirectory(path_widgetfiles)
 
+    # 인터페이스 생성
     window = Header.QApplication(Header.sys.argv)
     (dictionary_icon, font) = checkResources(path_resources, type_icon, type_font)
 
     main = MainWindow(size_x_main, size_y_main, title)
 
-    toolbar = makeToolbar(dictionary_icon, font, path_savefiles)
+    toolbar = makeToolbar(dictionary_icon, font, path_savefiles, path_widgetfiles)
     main.addToolBar(toolbar)
 
     widget_list = makeWidgetList(size_x_widget_list, size_y_widget_list, dictionary_icon, font, path_widgetfiles)
@@ -162,7 +164,7 @@ if __name__ == "__main__" :
 
     widget_list.signal_add.connect(programming.checkParameters)
 
-    print("start")
+    #print("start")
     main.show()
     
     Header.sys.exit(window.exec_())

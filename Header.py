@@ -4,6 +4,8 @@ import pickle
 import importlib
 import inspect
 import random
+import shutil
+import fileinput
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QDesktopWidget, 
                              QAction, QToolBar, QVBoxLayout, QScrollArea,

@@ -36,10 +36,11 @@ class WidgetList (Header.QScrollArea) :
         self.layout = Header.QVBoxLayout()
         self.widget.setLayout(self.layout)
 
-        self.setStyleSheet("border-style : solid; border-width : 2px; border-color : #FF0000;")
+        self.setStyleSheet("border-style : solid; border-width : 2px; border-color : #FF0000;") # 위젯 스타일 - 빨강
         self.setVisible(True)
 
-        (self.dialog, self.info_dialog) = self.makeInfoDialog()
+        #(self.dialog, self.info_dialog) = self.makeInfoDialog()
+        self.dialog = self.makeInfoDialog()
 
         self.list_widgetfiles = self.checkWidgetFile()
         self.displayWidgetFileList(self.list_widgetfiles)
@@ -57,6 +58,7 @@ class WidgetList (Header.QScrollArea) :
                     self.now_height_widget = 0
         self.widget.setFixedHeight(self.now_height_widget)
 
+    # 위젯 파일을 인터페이스에 표시
     def makeWidgetFile(self, data_widgetfile) :
         name = data_widgetfile["name"]
         path = data_widgetfile["path"]
@@ -96,7 +98,7 @@ class WidgetList (Header.QScrollArea) :
         button_add.setToolTip("이 위젯을 사용하기 위해 생성합니다.")
         button_add.clicked.connect(lambda : self.makeWidget(data_widgetfile))
 
-        widget_file.setStyleSheet("border-style : solid; border-width : 2px; border-color : #000000;")
+        widget_file.setStyleSheet("border-style : solid; border-width : 2px; border-color : #000000;") # 위젯 스타일 - 검정
         return widget_file
         
     def makeInfoDialog (self) :
@@ -111,20 +113,22 @@ class WidgetList (Header.QScrollArea) :
         text_info.setAcceptRichText(False)
         text_info.setReadOnly(True)
 
-        return (dialog, text_info)
+        return dialog
 
     def displayWidgetInfo(self, name, func_info) :
         info = func_info(None)
         self.dialog.setWindowTitle(name + " 위젯 정보")
-        self.info_dialog.setText(info)
+        #self.info_dialog.setText(info)
+        #self.dialog.exec_()
+        textedit = self.dialog.findChild(Header.QTextEdit)
+        textedit.setText(info)
         self.dialog.exec_()
 
     def editWidgetFile(self, path) :
         Header.os.popen(path)
 
     def makeWidget(self, data_widgetfile) :
-        # data_widgetfile = { name, path, class, function }
-        #print("do makeWidget")
+        # data_widgetfile = { name, path, class, function } 형태로 구성
         self.signal_add.emit(data_widgetfile)
 
 
@@ -135,18 +139,17 @@ class WidgetList (Header.QScrollArea) :
         
         try :
             list_resources = Header.os.listdir(self.path_widgetfiles)
-            list_python_files = list(f for f in list_resources if f.endswith(".py"))
+            list_python_files = list(f for f in list_resources if f.endswith(".py")) # .py 파일 전부 확인
         except :
             print("Directory access denied :", self.path_widgetfiles)
             Header.sys.exit(0)
-        #print("list_python_files:", list_python_files)
 
         # 파이썬 파일 리스트에서 각 파일을 모듈로 임포트하여 (name, module)의 리스트인 list_widget_file 제작
         for file_py in list_python_files :
             t_name = file_py[:-3] # 파일 이름에서 .py 제거 -> 모듈 이름
             try :
                 t_module = Header.importlib.import_module(t_name, self.path_widgetfiles)
-                if t_name != "default" : # 기본 파일은 인식하지 않음
+                if t_name != "default" : # 기본 파일 default는 인식하지 않음
                     tuple_widget = (t_name, t_module)
                     list_widget_files.append(tuple_widget)
             except :
@@ -158,7 +161,7 @@ class WidgetList (Header.QScrollArea) :
         # 필수 함수 editData, getData, setData, getOrder, setOrder, getInfo, 
         #           getSize, getName, setName, getKind, deleteWidget
         list_mandatory_func = ["__init__", "editData", "getData", "setData", "getOrder", "setOrder",
-                               "getInfo", "getSize", "getName", "setName", "getKind", "deleteWidget"]
+                               "getInfo", "getSize", "getName", "setName", "getKind"]
         list_dict_widget_files = []
         for file_widget in list_widget_files :  # 각 모듈에 대해
             dict_widget_files = {}
@@ -167,27 +170,35 @@ class WidgetList (Header.QScrollArea) :
             w_class = None
             w_connecting = False
             dict_w_func = {}
-            #print(file_widget[1].__file__)
+            
             list_class = Header.inspect.getmembers(file_widget[1], Header.inspect.isclass) # 클래스 목록을 확인하고
 
             for class_widget in reversed(list_class) : # 클래스 목록에서
                 if class_widget[0] == file_widget[0] : # 클래스 이름과 모듈 이름이 같은 클래스가 있는 경우
                     w_name = file_widget[0]
                     w_path = file_widget[1].__file__
-                    w_class = class_widget[1] # 정보를 임시로 저장
+                    w_class = class_widget[1] # 정보를 저장
                     
+                    is_get_c = False
+                    is_set_c = False
                     # 모듈의 함수 리스트를 가져오고
                     list_func = Header.inspect.getmembers(w_class, Header.inspect.isfunction)
-                    #print("list_func :", list_func)
                     num_func = 0
                     for func in list_func :
                         for name in list_mandatory_func :
-                            if func[0] == name : # 필수 함수가 작성되어 있는 경우, 정보를 임시로 저장
+                            if func[0] == name : # 필수 함수가 작성되어 있는 경우, 정보를 저장
                                 dict_w_func[name] = func[1]
                                 num_func += 1
-                            if func[0] == "connectWidget" : # 연결을 위한 함수가 작성되어 있는 경우, 정보를 저장
-                                dict_w_func["connectWidget"] = func[1] # 필수 함수가 아니므로 확인을 위한 num_func 값을 조정하지 않음
-                                w_connecting = True # 연결이 필요한지 아닌지 확인할 정보
+                            if func[0] == "setConnection" : # 연결에 필요한 함수들이 작성되어 있는 경우, 정보를 저장
+                                dict_w_func["setConnection"] = func[1] # 필수 함수가 아니므로 확인을 위한 num_func 값을 조정하지 않음
+                                is_set_c = True
+                            elif func[0] == "getConnection" :
+                                dict_w_func["getConnection"] = func[1]
+                                is_get_c = True
+
+                    if is_get_c and is_set_c :
+                        w_connecting = True # 연결이 가능한지 아닌지 확인할 정보 설정
+
                     if num_func == len(list_mandatory_func) : # 모든 필수 함수가 작성되어 있는 경우, 딕셔너리에 데이터 저장
                         dict_widget_files["name"] = w_name
                         dict_widget_files["path"] = w_path
@@ -202,12 +213,11 @@ class WidgetList (Header.QScrollArea) :
             if dict_widget_files :
                 list_dict_widget_files.append(dict_widget_files)
 
-        #print("list_dict_widget_files :", list_dict_widget_files)
         return list_dict_widget_files
 
     def displayWidgetFileList(self, list_widgetfiles) :
-        # 확인한 위젯 파일들의 목록을 위젯 형태로 만들어 표시함
-        # list_widgetfiles = [ { name, path, class, function, connecting } ... ]
+        # 확인한 위젯 파일들의 목록을 인터페이스에 표시함
+        # list_widgetfiles = [ { name, path, class, function, connecting }, ... ] 형태로 구성
         for widget_info in list_widgetfiles :
             widgetfile = self.makeWidgetFile(widget_info)
             self.layout.addWidget(widgetfile)

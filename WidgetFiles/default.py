@@ -11,8 +11,8 @@ class default (QWidget) :
 
         # 위젯의 종류에 따라 사용자 임의로 설정, 실행 중 변경 불가능
         self.kind = "default" # 위젯의 종류, 위젯 파일의 이름
-        self.size_x = 100 # 위젯의 가로 길이, 폭
-        self.size_y = 100 # 위젯의 세로 길이, 높이
+        self.size_x = 200 # 위젯의 가로 길이, 폭
+        self.size_y = 200 # 위젯의 세로 길이, 높이
 
         # 위젯의 종류에 따라 사용자 임의로 설정, 실행 중 변경 가능
         self.is_connected = False # 위젯이 연결되었는지 확인
@@ -29,7 +29,7 @@ class default (QWidget) :
 
     ######################### 필수 함수 #############################
     # 필수 함수 editData, getData, setData, getOrder, setOrder, getInfo, 
-    #           getSize, getName, setName, getKind, deleteWidget
+    #           getSize, getName, setName, getKind
     # 필수 함수들은 반드시 존재해야 하며, 
     # editData를 제외하고는 파라미터와 리턴을 변경하면 안됨
     # 필요에 따라 내용을 추가할 수 있음
@@ -80,9 +80,6 @@ class default (QWidget) :
 
     def getKind(self) : return self.kind
 
-    def deleteWidget(self) :
-        # 상위 위젯에 위젯의 삭제 요청을 보냄
-        pass
 
     ######################## 연결 위젯 필수 함수 #########################
     # 다른 위젯의 기능을 이용할 수 있는 위젯이 필수적으로 가져야 하는 함수
@@ -90,8 +87,12 @@ class default (QWidget) :
     # 파라미터로 연결할 위젯을 지정
     # 파라미터의 명칭이 연결할 위젯의 파일 이름과 같아야 함
 
-    def connectWidget(self) :
+    def setConnection(self) :
         pass
+
+    def getConnection(self) :
+        connected_widget = []
+        return connected_widget
 
 
     ##################### 사용자 함수 작성 #########################

@@ -110,10 +110,16 @@ class test_connect (QWidget) :
         pass
 
     ##################### 사용자 함수 작성 #########################
-    def connectWidget(self, test_widget1, test_widget2) :
+    def setConnection(self, test_widget1, test_widget2) :
+        #print("connect at test_connect")
         self.memo_widget = test_widget1
         self.paint_widget = test_widget2
-        print("do connectWidget :", self.memo_widget, self.paint_widget)
+        #print("do connectWidget :", self.memo_widget, self.paint_widget)
+    def getConnection(self) :
+        list_connected_widget = []
+        list_connected_widget.append(self.memo_widget)
+        list_connected_widget.append(self.paint_widget)
+        return list_connected_widget
 
     def saveWidgetData(self) :
         if (self.memo_widget is None) or (self.paint_widget is None) :

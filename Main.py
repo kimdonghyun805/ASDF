@@ -163,6 +163,8 @@ if __name__ == "__main__" :
     main.layout.addWidget(programming)
 
     widget_list.signal_add.connect(programming.checkParameters)
+    toolbar.signal_request_data.connect(programming.makeAllWidgetData)
+    programming.signal_pass_data.connect(toolbar.saveData)
 
     #print("start")
     main.show()

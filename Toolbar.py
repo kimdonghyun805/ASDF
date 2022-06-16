@@ -1,6 +1,8 @@
 import Header
 
 class Toolbar (Header.QToolBar) :
+    signal_request_data = Header.pyqtSignal()
+
     def __init__(self, dictionary_icon, title_font, error_font, path_savefile, path_widgetfile) :
         super().__init__()
         self.path_savefile = path_savefile
@@ -74,6 +76,9 @@ class Toolbar (Header.QToolBar) :
         # 1 : 위젯 파일 디렉토리에 접근 불가능, 혹은 default.py 없음
         # 2 : 위젯 파일 생성 시 이미 존재하는 이름 지정
         # 3 : 위젯 파일 생성 시 기본 위젯 파일 수정이 불가능
+        # 4 : 파일 이름을 입력하지 않음
+        # 5 : 저장할 정보가 없음
+        # 6 : 저장 파일을 생성할 수 없음
         message = ""
         if (error_no == 1) :
             message = "기본 위젯 파일에 접근할 수 없습니다."
@@ -81,6 +86,12 @@ class Toolbar (Header.QToolBar) :
             message = "해당 위젯 파일이 이미 존재합니다."
         elif (error_no == 3) :
             message = "기본 위젯 파일을 수정할 수 없습니다."
+        elif (error_no == 4) :
+            message = "파일 이름이 입력되지 않았습니다."
+        elif (error_no == 5) :
+            message = "저장할 위젯이 없습니다."
+        elif (error_no == 6) :
+            message = "저장 파일을 생성할 수 없습니다."
         else :
             message = "알수 없는 오류가 발생했습니다."
 
@@ -90,7 +101,6 @@ class Toolbar (Header.QToolBar) :
 
 
     def makeNewWidgetFile(self) :
-        #print("Do makeNewWidgetFile")
         # 위젯 파일 경로에서 default.py 확인
         list_python_files = []
         try :
@@ -117,27 +127,31 @@ class Toolbar (Header.QToolBar) :
         if self.need_to_get_filename : # 다이얼로그에서 확인 버튼이 입력된 경우
             lineedit = self.dialog_file_select.findChild(Header.QLineEdit)
             filename = lineedit.text()
+            if not filename : # 입력값이 없는 경우
+                self.showErrorDialog(4)
+                self.need_to_get_filename = False
+                return
             
             path_new = self.path_widgetfile + "\\" + filename + ".py"
             for file_py in list_python_files :
                 t_name = file_py[:-3]
                 if t_name == filename : # 이름이 같은 위젯 파일이 이미 존재하는 경우
                     self.showErrorDialog(2)
+                    self.need_to_get_filename = False
                     return
 
             # default.py에서 default 를 filename으로 변경한 후 새로운 파일 생성
             file_new = open(path_new, 'w', encoding="utf-8") # 파일 생성
             try :
                 with Header.fileinput.FileInput(path_default, openhook=Header.fileinput.hook_encoded("utf-8")) as f :
-                    print("do with", type(f), f)
                     for line in f :
                         if "default" in line :
                             line = line.replace("default", filename) # 파일에 등장하는 default를 filname으로 변경
                         file_new.write(line) # default를 한줄 씩 옮겨 작성
             except :
                 self.showErrorDialog(3)
+                self.need_to_get_filename = False
                 return
-            #print("open default")
             file_new.close()
             Header.os.popen(path_new)
             self.need_to_get_filename = False
@@ -158,8 +172,10 @@ class Toolbar (Header.QToolBar) :
         label_message.setAlignment(Header.Qt.AlignLeft)
         label_message.move(15, 10)
 
-        label_input = Header.QLineEdit("", dialog) ############################# 뛰어쓰기 허용하지 않도록 수정 필요
+        label_input = Header.QLineEdit("", dialog)
         label_input.setFont(self.error_font)
+        validator = Header.QRegExp("[0-9a-zA-Z]+") # 파일 이름은 영문과 숫자만 허용
+        label_input.setValidator(Header.QRegExpValidator(validator))
         label_input.setFixedSize(260, 30)
         label_input.move(20, 45)
 
@@ -199,7 +215,46 @@ class Toolbar (Header.QToolBar) :
         self.dialog_file_select.exec_()
 
     def saveProgram(self) :
-        print("Do saveProgram")
+        # programing에 모든 위젯 정보 요청
+        self.signal_request_data.emit()
+
+    def saveData(self, list_data_widget) :
+        # 위젯 정보를 파일 형태로 저장
+        if not list_data_widget : # 저장할 정보가 없는 경우
+            self.showErrorDialog(5)
+            return
+        # 저장 파일의 이름 입력
+        self.showFileSelectDialog(2)
+        if self.need_to_get_filename : # 다이얼로그에서 확인 버튼이 입력된 경우
+            lineedit = self.dialog_file_select.findChild(Header.QLineEdit)
+            filename = lineedit.text()
+            if not filename : # 입력값이 없는 경우
+                self.showErrorDialog(4)
+                self.need_to_get_filename = False
+                return
+            # filname.bin 파일을 생성하여 데이터 저장
+            path_file = self.path_savefile + "\\" + filename + ".bin"
+            savefile = None
+            try :
+                savefile = open(path_file, "wb")
+            except :
+                if savefile :
+                    savefile.close()
+                self.showErrorDialog(6)
+                self.need_to_get_filename = False
+                return
+            # pickle을 통해 암호화하여 저장
+            try :
+                Header.pickle.dump(list_data_widget, savefile)
+                savefile.close()
+            except :
+                if savefile :
+                    savefile.close()
+                self.showErrorDialog(6)
+                self.need_to_get_filename = False
+                return
+
+            self.need_to_get_filename = False
 
     def loadProgram(self) :
         print("Do loadProgram")

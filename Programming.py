@@ -1,6 +1,8 @@
 import Header
 
 class Programming(Header.QWidget) :
+    signal_pass_data = Header.pyqtSignal(list)
+
     def __init__(self, size_x, size_y, dictionary_icon, font, path_savefiles) :
         super().__init__()
         self.size_x = size_x
@@ -242,7 +244,6 @@ class Programming(Header.QWidget) :
         # 연결 대상이 필요한 경우를 확인하고 지정함
         try :
             if object_widget.is_connecting :
-                #print("widget need connecting")
                 # 위젯이 연결 기능이 있으나 set_connection, get_connection 중 하나라도 작성되어 있지 않은 경우
                 if (not func_set_connection) or (not func_get_connection) : 
                     self.showErrorDialog(5)
@@ -341,7 +342,6 @@ class Programming(Header.QWidget) :
         loc_x, loc_y = self.setInitialLocation()
         frame.move(loc_x, loc_y)
         frame.show()
-        #print("now widgets :", self.list_widget)
 
     def getWidgetListAsKind(self, kind) : # 생성된 위젯 중에서 kind가 일치하는 것을 탐색 
         list_widget_kind = []
@@ -353,6 +353,8 @@ class Programming(Header.QWidget) :
     # 위젯을 표시하고 일부 기능을 가지는 프레임 생성
     def makeWidgetFrame(self, object, func_edit, func_get_connection) :
         (x, y) = object.getSize()
+        if x == 0 : x = 100 # 크기가 0인 경우 프레임은 표시되도록 값을 조정
+        if y == 0 : y = 50
         order = object.getOrder()
         frame = WidgetFrame(x, y, order, self.font, self.icon_move, self.icon_edit, self.icon_close)
         frame.setParent(self.widget)
@@ -375,7 +377,6 @@ class Programming(Header.QWidget) :
         if not frame :
             print("Widget could not be found through order")
             return
-        print("frame order :", str(frame.order), "widget order :", str(frame.widget.getOrder()))
         parm_edit = Header.inspect.signature(frame.func_edit).parameters.values()
         # 입력받아야 하는 파라미터 추출
         list_parm_name = [] # 설정해야 하는 모든 파라미터 리스트
@@ -454,7 +455,6 @@ class Programming(Header.QWidget) :
         frame = None
         for f in self.list_frame :
             if f.order == order : # order로 프레임 탐색
-                #print("find frame :", f.label_name.text())
                 frame = f
         if not frame :
             print("Widget could not be found through order")
@@ -479,7 +479,6 @@ class Programming(Header.QWidget) :
         try :
             if widget.is_connecting :
                 list_connected_widget = frame.func_get_connection(widget)
-                #print("list_connected_widget :", list_connected_widget)
                 for w in list_connected_widget :
                     w.is_connected = False
         except :
@@ -498,6 +497,18 @@ class Programming(Header.QWidget) :
         del widget
         del frame
 
+    def makeAllWidgetData(self) :
+        self.list_data_widget = [] # 모든 위젯 데이터를 저장할 변수
+        for n in range(0, len(self.list_widget)) :
+            # 각 위젯에 대한 getData() 정보와 위치 정보를 가져와야 함
+            data_widget = self.list_widget[n].getData()
+            loc_frame = self.list_frame[n].pos()
+            data_widget["location_x"] = loc_frame.x()
+            data_widget["location_y"] = loc_frame.y()
+            self.list_data_widget.append(data_widget)
+
+        # toolbar에 데이터를 넘겨줌
+        self.signal_pass_data.emit(self.list_data_widget)
 
 # 위젯의 이름과 버튼을 표시할 프레임 클래스
 class WidgetFrame(Header.QWidget) :
@@ -516,10 +527,10 @@ class WidgetFrame(Header.QWidget) :
 
         self.setAcceptDrops(True)
 
-        self.setFixedSize(self.size_x + 10, self.size_y + 30)
-        self.bg.setFixedSize(self.size_x + 10, self.size_y + 30)
+        self.setFixedSize(self.size_x + 10, self.size_y + 35)
+        self.bg.setFixedSize(self.size_x + 10, self.size_y + 35)
         #self.setStyleSheet("background-color : gray;")
-        self.bg.setStyleSheet("background-color : #FFFFFFFF;")
+        self.bg.setStyleSheet("background-color : #FFDDDDDD;")
 
         self.label_name = Header.QLabel("", self.bg)
         self.label_name.setFont(font)
@@ -556,8 +567,8 @@ class WidgetFrame(Header.QWidget) :
     def setSize(self, x, y) :
         self.size_x = x
         self.size_y = y
-        self.setFixedSize(self.size_x + 10, self.size_y + 30)
-        self.bg.setFixedSize(self.size_x + 10, self.size_y + 30)
+        self.setFixedSize(self.size_x + 10, self.size_y + 35)
+        self.bg.setFixedSize(self.size_x + 10, self.size_y + 35)
         self.button_edit.move(self.size_x - 55, 5)
         self.button_close.move(self.size_x - 25, 5)
 
@@ -570,7 +581,6 @@ class WidgetFrame(Header.QWidget) :
     def getGetConnectionFunction(self) : return self.func_get_connection
 
     def editWidgetData(self) :
-        #print("emit signal edit :", self.label_name.text(), self.signal_edit_widget)
         # 위젯의 일부 데이터 수정
         self.signal_edit_widget.emit(self.order)
         # 데이터가 변경된 후 프레임 또한 변경

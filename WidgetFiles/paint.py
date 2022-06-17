@@ -27,7 +27,7 @@ class paint (QWidget) :
         ######################## 위젯 내용 작성 #######################
         self.font = QFont("Arial", 10)
         self.font.setPixelSize(12)
-        self.setStyleSheet("background-color : #FFFFFFFF")
+        #self.setStyleSheet("background-color : #EEDDDDDD")
 
         self.image = QImage(QSize(self.size_x, self.size_y), QImage.Format_RGB32)
         self.image.fill(Qt.white)
@@ -122,7 +122,7 @@ class paint (QWidget) :
         self.is_connected = data["is_connected"]
         #self.is_connecting = data["is_connecting"] # 재설정할 필요 없는 데이터
         # 입력되는 데이터에 따라 위젯을 조정
-        self.resize(self.size_x, self.size_y)
+        #self.resize(self.size_x, self.size_y)
         self.set_image(data["etc"]["image"])
 
     def getOrder(self) : return self.order # order값을 리턴
@@ -222,6 +222,7 @@ class paint (QWidget) :
             self.update()
             self.image.loadFromData(img)
 
+    # 그림 모두 지우기
     def clear_image(self) :
         self.image.fill(Qt.white)
         self.update()

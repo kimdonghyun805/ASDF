@@ -79,13 +79,12 @@ class memo (QWidget) :
         self.size_y = data["size_y"]
         self.is_connected = data["is_connected"]
         #self.is_connecting = data["is_connecting"] # 재설정할 필요 없는 데이터
-        
         data_memo = data["etc"]
         text = data_memo["text"]
-        
         # 입력되는 데이터에 따라 위젯을 조정
         self.resize(self.size_x, self.size_y)
-        self.setText(text)
+        self.text_edit.resize(self.size_x, self.size_y)
+        self.set_text(text)
 
     def getOrder(self) : return self.order # order값을 리턴
 

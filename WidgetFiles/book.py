@@ -80,6 +80,8 @@ class book (QWidget) :
         #self.resize(self.size_x, self.size_y)
 
     def getData(self) : # 위젯의 데이터를 딕셔너리 형태로 리턴
+        self.save_page()
+
         data = {}
         data["name"] = self.name
         data["order"] = self.order
@@ -94,6 +96,7 @@ class book (QWidget) :
         dict_memo["name"] = self.widget_memo.getName()
         dict_memo["kind"] = self.widget_memo.getKind()
         list_connection.append(dict_memo)
+        dict_paint = {}
         dict_paint["name"] = self.widget_paint.getName()
         dict_paint["kind"] = self.widget_paint.getKind()
         list_connection.append(dict_paint)
@@ -112,14 +115,12 @@ class book (QWidget) :
         #self.is_connecting = data["is_connecting"] # 재설정할 필요 없는 데이터
 
         # 위젯의 연결은 저장 데이터를 불러오는 함수에서 설정
-
         self.book_data = data["etc"]
         self.max_page = len(self.book_data)
-
         # 입력되는 데이터에 따라 위젯을 조정
         #self.resize(self.size_x, self.size_y)
-        self.now_page = -1
-        self.next_page()
+        self.now_page = 0
+        self.show_page(self.now_page)
 
     def getOrder(self) : return self.order # order값을 리턴
 
@@ -158,6 +159,12 @@ class book (QWidget) :
 
 
     ##################### 사용자 함수 작성 #########################
+    # 특정 페이지 표시
+    def show_page(self, n) :
+        self.widget_memo.set_text(self.book_data[n]["memo"])
+        self.widget_paint.set_image(self.book_data[n]["paint"])
+        self.set_label_page(n)
+
     def prev_page(self) :
         if self.now_page - 1 >= 0 : # 이전 페이지가 존재해야 함
             # 현재 페이지 정보 저장
@@ -165,11 +172,9 @@ class book (QWidget) :
 
             # 이전 페이지 표시
             self.now_page -= 1
-            self.widget_memo.set_text(self.book_data[self.now_page]["memo"])
-            self.widget_paint.set_image(self.book_data[self.now_page]["paint"])
-            self.set_label_page(self.now_page)
-        else : # 다음 페이지가 존재하지 않는 경우, 이무것도 하지 않음
-            print("not have prev page")
+            self.show_page(self.now_page)
+        else : # 이전 페이지가 존재하지 않는 경우, 이무것도 하지 않음
+            #print("not have prev page")
             pass 
 
     def next_page(self) :
@@ -179,11 +184,9 @@ class book (QWidget) :
 
             # 다음 페이지 표시
             self.now_page += 1
-            self.widget_memo.set_text(self.book_data[self.now_page]["memo"])
-            self.widget_paint.set_image(self.book_data[self.now_page]["paint"])
-            self.set_label_page(self.now_page)
+            self.show_page(self.now_page)
         else : # 다음 페이지가 존재하지 않는 경우, 이무것도 하지 않음
-            print("not have next page")
+            #print("not have next page")
             pass 
 
     def new_page(self) :

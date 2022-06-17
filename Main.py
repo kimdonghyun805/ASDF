@@ -80,13 +80,13 @@ def makeWidgetList(size_x, size_y, dictionary_icon, font, path_widgetfiles) :
     widget_list = WidgetList(size_x, size_y, dictionary_icon, f, path_widgetfiles)
     return widget_list
 
-def makeProgramming(size_x, size_y, dictionary_icon, font, path_savefiles) :
+def makeProgramming(size_x, size_y, dictionary_icon, font, path_widgetfiles) :
     # 프로그래밍 인터페이스 객체를 만들어 리턴
     f = Header.QFont(font)
     f.setPointSize(20)
     f.setPixelSize(16)
     f.setBold(False)
-    programming = Programming(size_x, size_y, dictionary_icon, f, path_savefiles)
+    programming = Programming(size_x, size_y, dictionary_icon, f, path_widgetfiles)
     return programming
 
 class MainWindow (Header.QMainWindow) :
@@ -104,15 +104,12 @@ class MainWindow (Header.QMainWindow) :
         self.setFixedHeight(self.size_y)
 
         self.widget = Header.QWidget()
-        #self.widget.resize(self.size_x, self.size_y - 100)
-        #self.widget.setFixedWidth(self.size_x)
-        #self.widget.setFixedHeight(self.size_y - 50)
         self.setCentralWidget(self.widget)
 
         self.layout = Header.QHBoxLayout()
         self.widget.setLayout(self.layout)
 
-        self.widget.setStyleSheet("border-style : solid; border-width : 2px; border-color : #0000FF;") # 위젯 스타일 - 파랑
+        #self.widget.setStyleSheet("border-style : solid; border-width : 2px; border-color : #0000FF;") # 위젯 스타일 - 파랑
 
 
 if __name__ == "__main__" :
@@ -159,14 +156,16 @@ if __name__ == "__main__" :
     widget_list = makeWidgetList(size_x_widget_list, size_y_widget_list, dictionary_icon, font, path_widgetfiles)
     main.layout.addWidget(widget_list)
 
-    programming = makeProgramming(size_x_programming, size_y_programming, dictionary_icon, font, path_savefiles)
+    programming = makeProgramming(size_x_programming, size_y_programming, dictionary_icon, font, path_widgetfiles)
     main.layout.addWidget(programming)
 
     widget_list.signal_add.connect(programming.checkParameters)
     toolbar.signal_request_data.connect(programming.makeAllWidgetData)
-    programming.signal_pass_data.connect(toolbar.saveData)
+    programming.signal_pass_data_to_toolbar.connect(toolbar.saveData)
+    toolbar.signal_pass_data_to_programming.connect(programming.makeWidgetFromData)
+    programming.signal_request_widget.connect(widget_list.getWidgetFile)
+    widget_list.signal_pass_widgetfile.connect(programming.setWidgetFile)
 
-    #print("start")
     main.show()
     
     Header.sys.exit(window.exec_())

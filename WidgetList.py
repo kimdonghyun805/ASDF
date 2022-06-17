@@ -2,6 +2,7 @@ import Header
 
 class WidgetList (Header.QScrollArea) :
     signal_add = Header.pyqtSignal(dict)
+    signal_pass_widgetfile = Header.pyqtSignal(dict)
 
     def __init__(self, size_x, size_y, dictionary_icon, font, path_widgetfiles) :
         super().__init__()
@@ -36,7 +37,7 @@ class WidgetList (Header.QScrollArea) :
         self.layout = Header.QVBoxLayout()
         self.widget.setLayout(self.layout)
 
-        self.setStyleSheet("border-style : solid; border-width : 2px; border-color : #FF0000;") # 위젯 스타일 - 빨강
+        #self.setStyleSheet("border-style : solid; border-width : 2px; border-color : #FF0000;") # 위젯 스타일 - 빨강
         self.setVisible(True)
 
         #(self.dialog, self.info_dialog) = self.makeInfoDialog()
@@ -69,6 +70,7 @@ class WidgetList (Header.QScrollArea) :
         height = 110
         widget_file.resize(Header.QSize(width, height))
         widget_file.setFixedSize(width, height)
+        widget_file.setStyleSheet("background-color : #FFDDDDDD;")
 
         widget_name = Header.QLabel(name, widget_file)
         widget_name.setFont(self.font)
@@ -98,7 +100,7 @@ class WidgetList (Header.QScrollArea) :
         button_add.setToolTip("이 위젯을 사용하기 위해 생성합니다.")
         button_add.clicked.connect(lambda : self.makeWidget(data_widgetfile))
 
-        widget_file.setStyleSheet("border-style : solid; border-width : 2px; border-color : #000000;") # 위젯 스타일 - 검정
+        #widget_file.setStyleSheet("border-style : solid; border-width : 2px; border-color : #000000;") # 위젯 스타일 - 검정
         return widget_file
         
     def makeInfoDialog (self) :
@@ -118,8 +120,6 @@ class WidgetList (Header.QScrollArea) :
     def displayWidgetInfo(self, name, func_info) :
         info = func_info(None)
         self.dialog.setWindowTitle(name + " 위젯 정보")
-        #self.info_dialog.setText(info)
-        #self.dialog.exec_()
         textedit = self.dialog.findChild(Header.QTextEdit)
         textedit.setText(info)
         self.dialog.exec_()
@@ -222,3 +222,13 @@ class WidgetList (Header.QScrollArea) :
             widgetfile = self.makeWidgetFile(widget_info)
             self.layout.addWidget(widgetfile)
             self.setWidgetHeight(True, self.height_widget_file)
+
+    # 특정 위젯 파일의 정보를 programming에 전달
+    def getWidgetFile(self, name) :
+        widgetfile = {}
+        for data_widgetfile in self.list_widgetfiles :
+            if data_widgetfile["name"] == name :
+                widgetfile = data_widgetfile
+        if not widgetfile :
+            print("could not be found corresponding widget file :", name)
+        self.signal_pass_widgetfile.emit(widgetfile)
